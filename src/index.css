@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-navy-900: #0d1d44;
+    --color-navy-800: #112558;
+    --color-navy-700: #163372;
+    --color-navy-600: #1e4690;
+    --color-navy-500: #2f5ba6;
+    --color-amber-500: #f59e0b;
+    --color-amber-600: #d97706;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-body text-navy-900 bg-white;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+    line-height: 1.25;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer components {
+  /* Reusable section container */
+  .container-page {
+    @apply max-w-6xl mx-auto px-6;
+  }
+
+  /* Divider line matching Poonawalla's subtle separators */
+  .divider {
+    @apply border-t border-surface-200;
+  }
+
+  /* Step indicator used across verification layers */
+  .step-connector {
+    @apply w-px bg-surface-200 mx-auto;
+    height: 32px;
+  }
+}
+
+@layer utilities {
+  /* Sentence case helper reminder — always use sentence case in UI copy */
+  .text-label {
+    @apply text-xs font-medium uppercase tracking-widest text-navy-500;
+  }
+}
