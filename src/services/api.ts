@@ -55,7 +55,8 @@ export async function verifyBusiness(
 // Steps to wire up:
 //   1. Use: GET https://services.gstin.gov.in/tools/patternvalidator?gstin={GSTIN}
 //      (This validates format only — free, no auth)
-//   2. For full details, use a paid GST API aggregator such as:
+//   2. For full details, use a paid GST API aggr
+// egator such as:
 //      - Masters India API (mastersindia.co)
 //      - RazorpayX Tax API
 //      - SignalX GST API

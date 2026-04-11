@@ -59,3 +59,9 @@
     @apply text-xs font-medium uppercase tracking-widest text-navy-500;
   }
 }
+
+/* Marquee animation for business type carousel */
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
