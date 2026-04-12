@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Upload, X, Phone, ArrowRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Upload, X, Phone, ArrowRight, Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
+import { MockDataBanner } from '@/components/ui/MockDataBanner'
 import { BusinessCheck } from '@/components/verification/BusinessCheck'
 import { GSTLookup } from '@/components/verification/GSTLookup'
 import { ProductExistence } from '@/components/verification/ProductExistence'
@@ -25,6 +27,7 @@ type Step = 'otp' | 'form' | 'verifying' | 'done'
 
 export default function AssessmentPage() {
   const [step, setStep] = useState<Step>('otp')
+  const navigate = useNavigate()
 
   // OTP state
   const [phone, setPhone] = useState('')
@@ -197,18 +200,42 @@ export default function AssessmentPage() {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="container-page py-10">
-      <div className="max-w-2xl mx-auto flex flex-col gap-8">
+    <div className="container-page py-8">
+      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+
+        {/* Mock data banner */}
+        <MockDataBanner showOtpHint />
+
+        {/* Step progress */}
+        <div className="flex items-center gap-1 text-xs">
+          {[
+            { label: 'Step 1', title: 'Verify identity', active: step === 'otp' || step === 'form' || step === 'verifying' || step === 'done' },
+            { label: 'Step 2', title: 'Fill shop details', active: step === 'form' || step === 'verifying' || step === 'done' },
+            { label: 'Step 3', title: 'Checking...', active: step === 'verifying' || step === 'done' },
+          ].map((s, i) => (
+            <div key={s.label} className="flex items-center gap-1">
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors ${
+                s.active ? 'bg-navy-800 text-white' : 'bg-surface-100 text-navy-400'
+              }`}>
+                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                  s.active ? 'bg-white/20' : 'bg-surface-200'
+                }`}>{i + 1}</span>
+                <span className="hidden sm:inline font-medium">{s.title}</span>
+              </div>
+              {i < 2 && <span className="text-surface-300">›</span>}
+            </div>
+          ))}
+        </div>
 
         {/* Page header */}
         <div>
-          <p className="text-label mb-2">Layer 1 — Business identity</p>
-          <h1 className="font-heading font-semibold text-2xl text-navy-900">
-            Business verification
+          <p className="text-label mb-1.5">Step 1 of 4 — Identity check</p>
+          <h1 className="font-heading font-semibold text-xl lg:text-2xl text-navy-900">
+            Verify your mobile number
           </h1>
           <p className="text-navy-500 mt-1.5 text-sm leading-relaxed">
-            We verify your business exists, check GST status, and confirm that your store
-            sells what it claims to. This takes under 30 seconds.
+            We first check who you are, then verify that your shop is real.
+            This step takes less than a minute.
           </p>
         </div>
 
@@ -230,12 +257,22 @@ export default function AssessmentPage() {
                     </div>
                     <div>
                       <h2 className="font-heading font-semibold text-navy-900 text-sm">
-                        Verify your mobile number
+                        Enter your mobile number
                       </h2>
                       <p className="text-xs text-navy-400 mt-0.5">
-                        We send a one-time code to confirm your identity before proceeding.
+                        We will send a 4-digit code to your mobile to confirm it is you.
                       </p>
                     </div>
+                  </div>
+
+                  {/* Demo hint */}
+                  <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5">
+                    <Info size={14} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-blue-700 leading-relaxed">
+                      <strong>Demo mode:</strong> Enter any mobile number and use OTP{' '}
+                      <span className="font-mono font-bold bg-blue-100 px-1.5 py-0.5 rounded text-blue-800">1234</span>{' '}
+                      to continue.
+                    </p>
                   </div>
 
                   <div className="divider" />
@@ -269,8 +306,12 @@ export default function AssessmentPage() {
                         className="flex flex-col gap-4"
                       >
                         <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                          <p className="text-xs text-emerald-700">
-                            OTP sent to +91 {phone}. Enter it below to continue.
+                          <p className="text-xs text-emerald-700 font-medium mb-0.5">
+                            OTP sent to +91 {phone}
+                          </p>
+                          <p className="text-xs text-emerald-600">
+                            Demo mode: use code{' '}
+                            <span className="font-mono font-bold bg-emerald-100 px-1.5 py-0.5 rounded">1234</span>
                           </p>
                         </div>
 
@@ -323,12 +364,26 @@ export default function AssessmentPage() {
               transition={{ duration: 0.3 }}
               className="flex flex-col gap-5"
             >
+              {/* Step context */}
+              <div className="bg-navy-50 border border-navy-200 rounded-lg px-4 py-3">
+                <p className="text-xs font-semibold text-navy-800 mb-0.5">Step 2 — Your shop details</p>
+                <p className="text-xs text-navy-600 leading-relaxed">
+                  Fill in your shop name, address, and the type of shop you run.
+                  We use this to check if your business appears on Google Maps and GST records.
+                </p>
+              </div>
+
               {/* Business details */}
               <Card>
                 <div className="flex flex-col gap-5">
-                  <h2 className="font-heading font-semibold text-navy-900 text-sm">
-                    Business details
-                  </h2>
+                  <div>
+                    <h2 className="font-heading font-semibold text-navy-900 text-sm">
+                      Shop information
+                    </h2>
+                    <p className="text-xs text-navy-400 mt-1">
+                      Enter the details exactly as they appear on your shop sign or business registration.
+                    </p>
+                  </div>
                   <div className="divider" />
 
                   <div className="flex flex-col gap-4">
@@ -367,10 +422,10 @@ export default function AssessmentPage() {
                     />
 
                     <Input
-                      label="GSTIN"
+                      label="GST number (GSTIN)"
                       optional
                       placeholder="15-character GST number"
-                      hint="Providing a valid GSTIN increases your credibility score."
+                      hint="Optional — but adding your GST number gives you a higher trust score."
                       value={form.gstin}
                       onChange={(e) =>
                         setForm((f) => ({ ...f, gstin: e.target.value.toUpperCase() }))
@@ -380,16 +435,25 @@ export default function AssessmentPage() {
                 </div>
               </Card>
 
+              {/* Step 3 context */}
+              <div className="bg-navy-50 border border-navy-200 rounded-lg px-4 py-3">
+                <p className="text-xs font-semibold text-navy-800 mb-0.5">Step 3 — Take shop photos</p>
+                <p className="text-xs text-navy-600 leading-relaxed">
+                  Take 3 to 5 photos of your shop right now using your phone camera.
+                  Include: shelves, counter, shop entrance. Our AI will scan these to check your stock and shop quality.
+                </p>
+              </div>
+
               {/* Image upload */}
               <Card>
                 <div className="flex flex-col gap-5">
                   <div>
                     <h2 className="font-heading font-semibold text-navy-900 text-sm">
-                      Store images
+                      Shop photos
                     </h2>
                     <p className="text-xs text-navy-400 mt-1">
-                      Upload 3–5 photos taken directly from your phone camera. Do not upload from
-                      WhatsApp or gallery — this strips the location data we need.
+                      Take 3–5 photos directly from your phone camera right now.
+                      Do not use old photos from your gallery or WhatsApp — we need fresh photos with location info.
                     </p>
                   </div>
 
@@ -458,15 +522,22 @@ export default function AssessmentPage() {
               </Card>
 
               {/* Submit */}
-              <div className="flex justify-end">
-                <Button
-                  size="lg"
-                  disabled={!formValid}
-                  onClick={runLayer1Verification}
-                >
-                  Run identity verification
-                  <ArrowRight size={16} />
-                </Button>
+              <div className="flex flex-col gap-3">
+                {!formValid && (
+                  <p className="text-xs text-navy-400 text-center">
+                    Fill in shop name, type, address, and pincode to continue.
+                  </p>
+                )}
+                <div className="flex justify-end">
+                  <Button
+                    size="lg"
+                    // disabled={!formValid}
+                    onClick={runLayer1Verification}
+                  >
+                    Check my business
+                    <ArrowRight size={16} />
+                  </Button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -480,6 +551,18 @@ export default function AssessmentPage() {
               transition={{ duration: 0.3 }}
               className="flex flex-col gap-4"
             >
+              {/* What's happening */}
+              <div className="bg-navy-50 border border-navy-200 rounded-lg px-4 py-3">
+                <p className="text-xs font-semibold text-navy-800 mb-0.5">
+                  {step === 'verifying' ? 'Checking your business...' : 'Step 4 — Verification complete'}
+                </p>
+                <p className="text-xs text-navy-600 leading-relaxed">
+                  {step === 'verifying'
+                    ? 'We are running 3 checks: confirming your business exists, looking up GST records, and scanning your shop photos for what you sell.'
+                    : 'All checks are done. Review your results below and proceed to the next step.'}
+                </p>
+              </div>
+
               {/* Verification checks */}
               <Card>
                 <div className="flex flex-col gap-6">
@@ -510,9 +593,17 @@ export default function AssessmentPage() {
                 <Layer1Summary
                   result={layer1Result}
                   onProceed={() => {
-                    // TODO: navigate to Layer 2 (image + geo analysis)
-                    // navigate('/assess/layer2')
-                    alert('Layer 2 — Image and geo analysis coming next.')
+                    navigate('/assess/layer2', {
+                      state: {
+                        images,
+                        businessType: form.businessType,
+                        businessName: form.businessName,
+                        layer1Score: layer1Result?.overallCredibilityScore ?? 0.7,
+                        layer1Result: layer1Result,
+                        pincode: form.pincode,
+                        address: form.address,
+                      },
+                    })
                   }}
                 />
               )}

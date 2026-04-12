@@ -58,27 +58,27 @@ const STATS = [
 const HOW_STEPS = [
   {
     number: '01',
-    title: 'Submit store details',
+    title: 'Enter your shop details',
     description:
-      'Verify your mobile, enter business name and address, upload 3–5 photos from your phone camera. No gallery uploads — we need live EXIF data.',
+      'Enter your mobile number to verify your identity, fill in your shop name and address, then take 3–5 photos of your shop from your phone. This takes less than 2 minutes.',
     img: 'https://images.unsplash.com/photo-1512428559087-560fa5ceab42?w=700&q=80',
-    tags: ['OTP verification', 'Google Business check', 'GST lookup'],
+    tags: ['Mobile verification', 'Business identity check', 'GST lookup (optional)'],
   },
   {
     number: '02',
-    title: 'AI analyses your store',
+    title: 'We check your shop',
     description:
-      'Computer vision reads shelf density, SKU count, and inventory value. Geo intelligence maps footfall, competitors, and road type from your GPS.',
+      'Our system scans your shop photos to understand what you sell and how much stock you have. It also checks your location to see how busy the area is.',
     img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=700&q=80',
-    tags: ['YOLO shelf scan', 'Overpass geo API', 'Florence-2 vision'],
+    tags: ['Photo analysis', 'Location check', 'Stock assessment'],
   },
   {
     number: '03',
-    title: 'Receive your score report',
+    title: 'Get your score report',
     description:
-      'Get a calibrated daily revenue range, monthly income estimate, confidence score, and risk flags — fully explainable, no black box.',
+      'See your business score with estimated daily sales, monthly income range, and any risk factors — explained in simple language, no confusing numbers.',
     img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=700&q=80',
-    tags: ['Revenue range', 'Risk flags', 'Pre-approve / Review / Reject'],
+    tags: ['Daily sales estimate', 'Monthly income range', 'Risk indicators'],
   },
 ]
 
@@ -268,32 +268,32 @@ export default function HomePage() {
               transition={{ duration: 0.5 }}
               className="flex-1 max-w-lg"
             >
-              <span className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1 rounded-full bg-navy-800 text-navy-300 border border-navy-700 mb-6">
+              <span className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 mb-6">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                Remote business assessment — no field visit needed
+                Demo version — sample data only
               </span>
-              <h1 className="font-heading font-semibold text-4xl lg:text-5xl text-white leading-tight">
-                Score any business
+              <h1 className="font-heading font-semibold text-3xl lg:text-5xl text-white leading-tight">
+                Score your shop
                 <br />
-                <span className="text-amber-400">in 30 seconds.</span>
+                <span className="text-amber-400">in under a minute.</span>
               </h1>
-              <p className="mt-5 text-navy-300 text-base leading-relaxed">
-                BizScore turns 5 photos and a GPS pin into a calibrated cash flow estimate.
-                No GST return. No bank statement. No site visit. Built for NBFCs lending to
-                informal businesses across India.
+              <p className="mt-4 text-navy-300 text-sm lg:text-base leading-relaxed">
+                Take 5 photos of your shop and fill in basic details.
+                We check your business and give you an instant score.
+                No GST documents, no bank statements, no agent visits.
               </p>
-              <div className="mt-8 flex gap-3">
+              <div className="mt-6 flex gap-3">
                 <Link to="/assess">
                   <Button size="lg">
-                    Start assessment
+                    Start free assessment
                     <ArrowRight size={16} />
                   </Button>
                 </Link>
               </div>
-              <div className="mt-8 flex flex-wrap gap-4">
-                {['Vision-based inventory analysis', 'Geo intelligence from GPS', 'Fraud-resistant submission'].map((s) => (
+              <div className="mt-6 flex flex-col sm:flex-row flex-wrap gap-3">
+                {['Checks what you sell', 'Checks your area and location', 'Quick and secure'].map((s) => (
                   <div key={s} className="flex items-center gap-1.5">
-                    <CheckCircle2 size={13} className="text-emerald-400" />
+                    <CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" />
                     <span className="text-xs text-navy-400">{s}</span>
                   </div>
                 ))}
@@ -335,13 +335,13 @@ export default function HomePage() {
       {/* Business type carousel */}
       <section className="border-b border-surface-200 bg-surface-50 py-14">
         <div className="container-page mb-8">
-          <p className="text-label mb-2">Works for any business type</p>
+          <p className="text-label mb-2">Works for all shop types</p>
           <h2 className="font-heading font-semibold text-2xl text-navy-900">
-            One platform, every business.
+            Any shop, any city, any size.
           </h2>
           <p className="text-navy-500 text-sm mt-2">
-            Whether it is a kirana store, a clinic, or a salon — BizScore assesses them all
-            from the same 5 photos and a pin.
+            Whether you run a kirana store, a salon, or a pharmacy — BizScore works the same
+            way for all of them.
           </p>
         </div>
 
@@ -363,8 +363,11 @@ export default function HomePage() {
           <div>
             <p className="text-label mb-2">How it works</p>
             <h2 className="font-heading font-semibold text-2xl text-navy-900">
-              From photos to credit signal.
+              3 simple steps to your shop score.
             </h2>
+            <p className="text-navy-500 text-sm mt-2">
+              No paperwork. No appointments. Just your phone and your shop.
+            </p>
           </div>
           {HOW_STEPS.map((step, i) => (
             <FeatureSection key={step.number} step={step} reverse={i % 2 !== 0} />
@@ -377,20 +380,20 @@ export default function HomePage() {
         <div className="container-page py-16">
           <div className="flex flex-col lg:flex-row gap-12 items-start">
             <div className="flex-1 max-w-md">
-              <p className="text-label mb-3">The output</p>
+              <p className="text-label mb-3">What you get</p>
               <h2 className="font-heading font-semibold text-2xl text-navy-900 leading-tight">
-                A decision, not just a number.
+                A clear report, not just a number.
               </h2>
               <p className="text-navy-500 text-sm mt-4 leading-relaxed">
-                Every assessment produces a full explainability report. The loan officer sees
-                exactly which signals drove the result and why — no black box.
+                Your score report explains everything in plain language — what we checked,
+                what we found, and what it means for your business.
               </p>
               <div className="mt-8 flex flex-col gap-5">
                 {[
-                  { icon: TrendingUp, title: 'Revenue range with uncertainty band', sub: 'Daily sales, monthly revenue, and monthly income as calibrated min–max ranges.' },
-                  { icon: Shield, title: 'Credibility and fraud flags', sub: 'GPS consistency, EXIF metadata, image hash deduplication, and product mismatch detection.' },
-                  { icon: MapPin, title: 'Geo and demand intelligence', sub: 'Population density, POI count, competitor proximity, road type, and area affluence.' },
-                  { icon: Camera, title: 'Visual signal breakdown', sub: 'Shelf density index, SKU diversity score, and inventory value from your photos.' },
+                  { icon: TrendingUp, title: 'Estimated daily and monthly sales', sub: 'See how much your shop likely earns per day and per month, shown as a range.' },
+                  { icon: Shield, title: 'Identity and fraud checks', sub: 'We verify that your business is real and the photos are from your actual shop.' },
+                  { icon: MapPin, title: 'Location and area report', sub: 'Understand how busy your area is, how many competitors are nearby, and your road visibility.' },
+                  { icon: Camera, title: 'Shop photo analysis', sub: 'We scan your shelves to count products, estimate stock value, and check shop quality.' },
                 ].map((item) => {
                   const Icon = item.icon
                   return (
@@ -416,18 +419,18 @@ export default function HomePage() {
 
       {/* CTA */}
       <section className="bg-navy-900">
-        <div className="container-page py-16">
-          <div className="max-w-xl mx-auto text-center flex flex-col items-center gap-6">
-            <h2 className="font-heading font-semibold text-3xl text-white leading-tight">
-              Score a business in 30 seconds.
+        <div className="container-page py-14">
+          <div className="max-w-xl mx-auto text-center flex flex-col items-center gap-5">
+            <h2 className="font-heading font-semibold text-2xl lg:text-3xl text-white leading-tight">
+              Check your shop score — it's free.
             </h2>
             <p className="text-navy-300 text-sm leading-relaxed">
-              No field visit. No GST return. No bank statement. Just photos, a pin, and a
-              decision-ready credit signal.
+              No documents needed. Just your phone, 5 photos of your shop, and your address.
+              Takes less than 2 minutes.
             </p>
             <Link to="/assess">
               <Button size="lg">
-                Start free assessment
+                Start assessment
                 <ArrowRight size={16} />
               </Button>
             </Link>
@@ -436,13 +439,18 @@ export default function HomePage() {
       </section>
 
       {/* Disclaimer */}
-      <section className="bg-surface-50 border-t border-surface-200">
-        <div className="container-page py-6">
-          <p className="text-xs text-navy-400 leading-relaxed max-w-2xl">
-            BizScore outputs are indicative assessments based on visual and spatial signals.
-            They are not credit decisions. All final lending decisions remain with the authorised
-            financial institution and are subject to applicable regulations and field verification.
-          </p>
+      <section className="bg-amber-50 border-t border-amber-200">
+        <div className="container-page py-5">
+          <div className="flex items-start gap-3 max-w-3xl">
+            <span className="text-amber-500 text-base flex-shrink-0 mt-0.5">⚠</span>
+            <div>
+              <p className="text-xs font-semibold text-amber-800 mb-1">Demo version — mock data only</p>
+              <p className="text-xs text-amber-700 leading-relaxed">
+                This is a demo version of BizScore. All scores and results shown are sample data and not real assessments. This tool is not a credit decision —
+                all final loan approvals remain with the authorised financial institution.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </div>
