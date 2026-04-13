@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { Upload, X, Phone, ArrowRight, Info } from 'lucide-react'
+import { Phone, ArrowRight, Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
@@ -11,6 +11,7 @@ import { GSTLookup } from '@/components/verification/GSTLookup'
 import { ProductExistence } from '@/components/verification/ProductExistence'
 import { Layer1Summary } from '@/components/verification/Layer1Summary'
 import { verifyBusiness, verifyGST, checkProductExistence } from '@/services/api'
+import { GuidedCameraCapture } from '@/components/GuidedCameraCapture'
 import { BUSINESS_TYPES } from '@/types'
 import type {
   BusinessFormData,
@@ -45,9 +46,10 @@ export default function AssessmentPage() {
     businessType: '',
     gstin: '',
   })
-  const [images, setImages] = useState<File[]>([])
-  const [imagePreviews, setImagePreviews] = useState<string[]>([])
-  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const TOTAL_PHOTOS = 5
+  const [images, setImages] = useState<(File | null)[]>(Array(TOTAL_PHOTOS).fill(null))
+  const [imagePreviews, setImagePreviews] = useState<(string | null)[]>(Array(TOTAL_PHOTOS).fill(null))
 
   // Verification state
   const [businessStatus, setBusinessStatus] = useState<VerificationStatus>('idle')
@@ -95,30 +97,30 @@ export default function AssessmentPage() {
 
   // ─── Image handlers ────────────────────────────────────────────────────────
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? [])
-    if (files.length === 0) return
-
-    const remaining = 5 - images.length
-    const toAdd = files.slice(0, remaining)
-
-    setImages((prev) => [...prev, ...toAdd])
-
-    toAdd.forEach((file) => {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreviews((prev) => [...prev, reader.result as string])
-      }
-      reader.readAsDataURL(file)
+  function handleCapture(index: number, file: File, preview: string) {
+    setImages((prev) => {
+      const next = [...prev]
+      next[index] = file
+      return next
     })
-
-    // Reset input so same file can be re-selected if removed
-    e.target.value = ''
+    setImagePreviews((prev) => {
+      const next = [...prev]
+      next[index] = preview
+      return next
+    })
   }
 
-  function removeImage(index: number) {
-    setImages((prev) => prev.filter((_, i) => i !== index))
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index))
+  function handleRemove(index: number) {
+    setImages((prev) => {
+      const next = [...prev]
+      next[index] = null
+      return next
+    })
+    setImagePreviews((prev) => {
+      const next = [...prev]
+      next[index] = null
+      return next
+    })
   }
 
   // ─── Verification runner ───────────────────────────────────────────────────
@@ -144,14 +146,15 @@ export default function AssessmentPage() {
     setGstResult(gst)
     setGstStatus(
       gst.status === 'not_provided' ? 'success' :
-      gst.verified ? 'success' : 'failed'
+        gst.verified ? 'success' : 'failed'
     )
 
     // 3. Product existence (only if images uploaded)
     setProductStatus(images.length > 0 ? 'loading' : 'idle')
+    const capturedImages = images.filter((f): f is File => f !== null)
     let product: ProductExistenceResult | null = null
     if (images.length > 0) {
-      product = await checkProductExistence(form.businessType, images)
+      product = await checkProductExistence(form.businessType, capturedImages)
       setProductResult(product)
       setProductStatus(product.matches ? 'success' : 'warning')
     }
@@ -169,8 +172,8 @@ export default function AssessmentPage() {
 
     const recommendation: Layer1Result['recommendation'] =
       overall >= 0.65 ? 'proceed' :
-      overall >= 0.40 ? 'review' :
-      'reject'
+        overall >= 0.40 ? 'review' :
+          'reject'
 
     setLayer1Result({
       businessCheck: biz,
@@ -191,11 +194,14 @@ export default function AssessmentPage() {
 
   // ─── Form validation ───────────────────────────────────────────────────────
 
+  const allPhotosCaptured = images.every(Boolean)
+
   const formValid =
     form.businessName.trim().length > 2 &&
     form.address.trim().length > 4 &&
     form.pincode.trim().length === 6 &&
-    form.businessType !== ''
+    form.businessType !== '' &&
+    allPhotosCaptured
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
@@ -214,12 +220,10 @@ export default function AssessmentPage() {
             { label: 'Step 3', title: 'Checking...', active: step === 'verifying' || step === 'done' },
           ].map((s, i) => (
             <div key={s.label} className="flex items-center gap-1">
-              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors ${
-                s.active ? 'bg-navy-800 text-white' : 'bg-surface-100 text-navy-400'
-              }`}>
-                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                  s.active ? 'bg-white/20' : 'bg-surface-200'
-                }`}>{i + 1}</span>
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors ${s.active ? 'bg-navy-800 text-white' : 'bg-surface-100 text-navy-400'
+                }`}>
+                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${s.active ? 'bg-white/20' : 'bg-surface-200'
+                  }`}>{i + 1}</span>
                 <span className="hidden sm:inline font-medium">{s.title}</span>
               </div>
               {i < 2 && <span className="text-surface-300">›</span>}
@@ -445,99 +449,46 @@ export default function AssessmentPage() {
               </div>
 
               {/* Image upload */}
-              <Card>
-                <div className="flex flex-col gap-5">
-                  <div>
-                    <h2 className="font-heading font-semibold text-navy-900 text-sm">
-                      Shop photos
-                    </h2>
-                    <p className="text-xs text-navy-400 mt-1">
-                      Take 3–5 photos directly from your phone camera right now.
-                      Do not use old photos from your gallery or WhatsApp — we need fresh photos with location info.
-                    </p>
-                  </div>
+<Card>
+  <div className="flex flex-col gap-5">
+    <div>
+      <h2 className="font-heading font-semibold text-navy-900 text-sm">
+        Shop photos
+      </h2>
+      <p className="text-xs text-navy-400 mt-1">
+        Take 5 photos using your camera right now — no gallery uploads allowed.
+        Each photo has specific instructions shown before you capture.
+      </p>
+    </div>
 
-                  <div className="divider" />
+    <div className="divider" />
 
-                  {/* Upload zone */}
-                  {images.length < 5 && (
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="
-                        w-full border-2 border-dashed border-surface-200 rounded-lg
-                        p-6 flex flex-col items-center gap-2
-                        hover:border-navy-300 hover:bg-surface-50
-                        transition-colors duration-150 cursor-pointer
-                      "
-                    >
-                      <div className="w-10 h-10 rounded-full bg-surface-100 flex items-center justify-center">
-                        <Upload size={18} className="text-navy-500" />
-                      </div>
-                      <span className="text-sm text-navy-600 font-medium">
-                        Tap to upload photos
-                      </span>
-                      <span className="text-xs text-navy-400">
-                        {images.length} of 5 uploaded · Shelves, counter, storefront
-                      </span>
-                    </button>
-                  )}
-
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    capture="environment"
-                    className="hidden"
-                    onChange={handleImageChange}
-                  />
-
-                  {/* Previews */}
-                  {imagePreviews.length > 0 && (
-                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                      {imagePreviews.map((src, i) => (
-                        <div key={i} className="relative aspect-square group">
-                          <img
-                            src={src}
-                            alt={`Store image ${i + 1}`}
-                            className="w-full h-full object-cover rounded border border-surface-200"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(i)}
-                            className="
-                              absolute top-1 right-1 w-5 h-5 rounded-full
-                              bg-navy-900/70 flex items-center justify-center
-                              opacity-0 group-hover:opacity-100 transition-opacity
-                            "
-                          >
-                            <X size={11} className="text-white" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </Card>
+    <GuidedCameraCapture
+      images={images}
+      previews={imagePreviews}
+      onCapture={handleCapture}
+      onRemove={handleRemove}
+    />
+  </div>
+</Card>
 
               {/* Submit */}
               <div className="flex flex-col gap-3">
-                {!formValid && (
-                  <p className="text-xs text-navy-400 text-center">
-                    Fill in shop name, type, address, and pincode to continue.
-                  </p>
-                )}
-                <div className="flex justify-end">
-                  <Button
-                    size="lg"
-                    // disabled={!formValid}
-                    onClick={runLayer1Verification}
-                  >
-                    Check my business
-                    <ArrowRight size={16} />
-                  </Button>
-                </div>
+              {!formValid && (
+  <p className="text-xs text-navy-400 text-center">
+    {!allPhotosCaptured
+      ? `${images.filter(Boolean).length} of 5 photos taken — capture all 5 to continue.`
+      : 'Fill in shop name, type, address, and pincode to continue.'}
+  </p>
+)}
+<Button
+  size="lg"
+  disabled={!formValid}           // now includes allPhotosCaptured
+  onClick={runLayer1Verification}
+>
+  Check my business
+  <ArrowRight size={16} />
+</Button>
               </div>
             </motion.div>
           )}
@@ -602,6 +553,7 @@ export default function AssessmentPage() {
                         layer1Result: layer1Result,
                         pincode: form.pincode,
                         address: form.address,
+                        phone: form.phone,
                       },
                     })
                   }}

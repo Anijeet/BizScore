@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion'
 import { Building2, Star, Clock, MapPin, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
-import { ScoreRing } from '@/components/ui/ScoreRing'
 import type { BusinessCheckResult, VerificationStatus } from '@/types'
 
 interface BusinessCheckProps {
@@ -55,10 +54,6 @@ export function BusinessCheck({ status, result }: BusinessCheckProps) {
           {result.exists ? (
             <div className="bg-surface-50 rounded-lg p-4 border border-surface-200">
               <div className="flex items-start gap-4">
-                {/* Score ring */}
-                <ScoreRing score={result.score} size={64} />
-
-                {/* Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-heading font-semibold text-navy-900 text-sm">

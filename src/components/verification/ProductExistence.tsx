@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion'
 import { ScanSearch, CheckCircle2, XCircle, AlertCircle, Tag } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
-import { ScoreRing } from '@/components/ui/ScoreRing'
 import type { ProductExistenceResult, VerificationStatus } from '@/types'
 
 interface ProductExistenceProps {
@@ -66,8 +65,6 @@ export function ProductExistence({ status, result, imagesUploaded }: ProductExis
           {result.matches ? (
             <div className="bg-surface-50 rounded-lg p-4 border border-surface-200">
               <div className="flex items-start gap-4">
-                <ScoreRing score={result.confidenceScore} size={64} />
-
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-heading font-semibold text-navy-900 text-sm">
@@ -91,9 +88,8 @@ export function ProductExistence({ status, result, imagesUploaded }: ProductExis
                     </div>
                   </div>
 
-                  {/* Confidence level label */}
                   <div className="mt-3">
-                    <ConfidenceBar score={result.confidenceScore} />
+                    <ConfidenceLabel score={result.confidenceScore} />
                   </div>
                 </div>
               </div>
@@ -125,33 +121,15 @@ export function ProductExistence({ status, result, imagesUploaded }: ProductExis
   )
 }
 
-// ─── Confidence bar ───────────────────────────────────────────────────────────
-
-function ConfidenceBar({ score }: { score: number }) {
-  const pct = Math.round(score * 100)
+/** Qualitative only — no percentage shown to business owners */
+function ConfidenceLabel({ score }: { score: number }) {
   const label =
-    score >= 0.8 ? 'High confidence' :
-    score >= 0.6 ? 'Moderate confidence' :
-    'Low confidence'
-
-  const barColor =
-    score >= 0.8 ? 'bg-emerald-500' :
-    score >= 0.6 ? 'bg-amber-500' :
-    'bg-red-400'
+    score >= 0.8 ? 'Photo check: strong match with your shop type' :
+    score >= 0.6 ? 'Photo check: reasonable match with your shop type' :
+    'Photo check: unclear match — a bank officer will review'
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-navy-400">{label}</span>
-        <span className="text-xs font-medium text-navy-700">{pct}%</span>
-      </div>
-      <div className="h-1.5 rounded-full bg-surface-200 overflow-hidden">
-        <div
-          className={`h-full rounded-full ${barColor} transition-all duration-700`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
+    <p className="text-xs text-navy-500 leading-relaxed">{label}</p>
   )
 }
 

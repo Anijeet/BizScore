@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion'
 import { FileText, Calendar, MapPin, CheckCircle2, XCircle, AlertCircle, Info } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
-import { ScoreRing } from '@/components/ui/ScoreRing'
 import type { GSTResult, VerificationStatus } from '@/types'
 
 interface GSTLookupProps {
@@ -23,7 +22,7 @@ export function GSTLookup({ status, result }: GSTLookupProps) {
               GST verification
             </h3>
             <p className="text-xs text-navy-400 mt-0.5">
-              Optional. Validates GSTIN format and registration status. Increases confidence score if verified.
+              Optional. Validates GSTIN format and registration status with the government records.
             </p>
           </div>
         </div>
@@ -60,7 +59,7 @@ export function GSTLookup({ status, result }: GSTLookupProps) {
                 GSTIN not provided. This is common for small businesses below the GST threshold.
               </p>
               <p className="text-xs text-navy-400 mt-1">
-                Confidence score is set to neutral (0.5). Providing a valid GSTIN increases it to 0.9.
+                Adding a valid GST number later can help the bank verify your business faster.
               </p>
             </div>
           </div>
@@ -96,8 +95,6 @@ export function GSTLookup({ status, result }: GSTLookupProps) {
           className="bg-surface-50 rounded-lg p-4 border border-surface-200"
         >
           <div className="flex items-start gap-4">
-            <ScoreRing score={result.score} size={64} />
-
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-heading font-semibold text-navy-900 text-sm">

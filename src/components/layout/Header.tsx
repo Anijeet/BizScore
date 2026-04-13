@@ -85,6 +85,18 @@ export function Header() {
             >
               Home
             </Link>
+            <Link
+              to="/docs"
+              className={`
+                px-2.5 py-1.5 rounded text-sm font-medium transition-colors duration-150
+                ${location.pathname === '/docs'
+                  ? 'bg-navy-50 text-navy-800'
+                  : 'text-navy-500 hover:text-navy-800 hover:bg-surface-100'
+                }
+              `}
+            >
+              Docs
+            </Link>
             {!isAssessment && (
               <Link
                 to="/assess"
