@@ -1,4 +1,8 @@
 import type { Layer1Result, Layer2Result, Layer3Result, Layer4Result } from '@/types'
+import {
+  BUNDLED_INDIAN_DEMO_IDS,
+  buildBundledIndianDemoApplications,
+} from '@/data/indianDemoApplications'
 
 // ─── Application record ───────────────────────────────────────────────────────
 
@@ -11,9 +15,15 @@ export interface SavedApplication {
   businessType: string
   pincode: string
   address: string
+  /** WGS84 from applicant device when captured in-flow; optional on legacy rows. */
+  latitude?: number
+  longitude?: number
   phone?: string
   /** Set when officer acts; missing on legacy records = treat as pending_review */
   officerStatus?: OfficerApplicationStatus
+  /** Pre-seeded Indian scenarios; UI may label as bundled demo. */
+  isBundledDemo?: boolean
+  bundledDemoNote?: string
   layer1Result: Layer1Result
   layer2Result: Layer2Result
   layer3Result: Layer3Result
@@ -22,6 +32,15 @@ export interface SavedApplication {
 
 const APPS_KEY = 'bizscope_applications'
 const AUTH_KEY = 'bizscope_officer_auth'
+
+const BUNDLED_DEMO_ID_SET = new Set<string>(BUNDLED_INDIAN_DEMO_IDS)
+
+function withBundledIndianDemos(parsed: SavedApplication[]): SavedApplication[] {
+  const hasAllBundled = BUNDLED_INDIAN_DEMO_IDS.every((id) => parsed.some((a) => a.id === id))
+  if (hasAllBundled) return parsed
+  const withoutBundledSlots = parsed.filter((a) => !BUNDLED_DEMO_ID_SET.has(a.id))
+  return [...buildBundledIndianDemoApplications(), ...withoutBundledSlots]
+}
 
 // ─── Reference ID generator ───────────────────────────────────────────────────
 
@@ -54,14 +73,30 @@ export function saveApplication(app: SavedApplication): void {
 export function getApplications(): SavedApplication[] {
   try {
     const raw = localStorage.getItem(APPS_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as SavedApplication[]
-    return parsed.map((a) => ({
+    const parsed: SavedApplication[] = raw ? (JSON.parse(raw) as SavedApplication[]) : []
+    const merged = withBundledIndianDemos(parsed)
+    const needsBundledPersist = BUNDLED_INDIAN_DEMO_IDS.some((id) => !parsed.some((a) => a.id === id))
+
+    let list = merged
+    if (needsBundledPersist) {
+      try {
+        localStorage.setItem(APPS_KEY, JSON.stringify(merged))
+      } catch {
+        const trimmed = merged.slice(0, 22)
+        localStorage.setItem(APPS_KEY, JSON.stringify(trimmed))
+        list = trimmed
+      }
+    }
+
+    return list.map((a) => ({
       ...a,
       officerStatus: a.officerStatus ?? 'pending_review',
     }))
   } catch {
-    return []
+    return withBundledIndianDemos([]).map((a) => ({
+      ...a,
+      officerStatus: a.officerStatus ?? 'pending_review',
+    }))
   }
 }
 

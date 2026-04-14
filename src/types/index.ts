@@ -151,6 +151,9 @@ export interface BusinessFormData {
   phone: string
   businessType: string
   gstin: string // optional
+  /** Set when the applicant uses browser geolocation at the shop (WGS84). */
+  latitude?: number
+  longitude?: number
 }
 
 // ─── Business types for dropdown ─────────────────────────────────────────────

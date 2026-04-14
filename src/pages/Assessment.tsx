@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { Phone, ArrowRight, Info } from 'lucide-react'
+import { ArrowRight, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
@@ -12,6 +12,7 @@ import { ProductExistence } from '@/components/verification/ProductExistence'
 import { Layer1Summary } from '@/components/verification/Layer1Summary'
 import { verifyBusiness, verifyGST, checkProductExistence } from '@/services/api'
 import { GuidedCameraCapture } from '@/components/GuidedCameraCapture'
+import { locateShopAddress } from '@/services/browserGeolocation'
 import { BUSINESS_TYPES } from '@/types'
 import type {
   BusinessFormData,
@@ -59,6 +60,10 @@ export default function AssessmentPage() {
   const [gstResult, setGstResult] = useState<GSTResult | null>(null)
   const [productResult, setProductResult] = useState<ProductExistenceResult | null>(null)
   const [layer1Result, setLayer1Result] = useState<Layer1Result | null>(null)
+
+  const [geoLoading, setGeoLoading] = useState(false)
+  const [geoError, setGeoError] = useState('')
+  const [geoHint, setGeoHint] = useState('')
 
   // ─── OTP handlers ─────────────────────────────────────────────────────────
 
@@ -108,6 +113,31 @@ export default function AssessmentPage() {
       next[index] = preview
       return next
     })
+  }
+
+  async function handleUseShopLocation() {
+    setGeoError('')
+    setGeoHint('')
+    setGeoLoading(true)
+    try {
+      const { addressLine, pincode, latitude, longitude, accuracyM } = await locateShopAddress()
+      setForm((f) => ({
+        ...f,
+        address: addressLine,
+        pincode: pincode.length === 6 ? pincode : f.pincode,
+        latitude,
+        longitude,
+      }))
+      setGeoHint(
+        accuracyM != null && accuracyM <= 200
+          ? 'Location saved — fine-tune the address if needed.'
+          : 'Location saved — accuracy is rough; please check the address and PIN.',
+      )
+    } catch (e) {
+      setGeoError(e instanceof Error ? e.message : 'Could not use your location.')
+    } finally {
+      setGeoLoading(false)
+    }
   }
 
   function handleRemove(index: number) {
@@ -205,42 +235,39 @@ export default function AssessmentPage() {
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
-  return (
-    <div className="container-page py-8">
-      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+  const header =
+    step === 'otp'
+      ? { k: '1/4', title: 'Mobile number', sub: 'We text a short code — demo uses OTP shown in the yellow strip above.' }
+      : step === 'form'
+        ? { k: '1/4', title: 'Shop details & photos', sub: 'Then we run checks before the next steps.' }
+        : { k: '1/4', title: step === 'verifying' ? 'Running checks…' : 'Checks done', sub: step === 'verifying' ? 'Three quick verifications.' : 'Review the cards below.' }
 
-        {/* Mock data banner */}
+  return (
+    <div className="container-page py-6 sm:py-8 pb-12">
+      <div className="max-w-2xl mx-auto flex flex-col gap-5 sm:gap-6 px-0 sm:px-0">
+
         <MockDataBanner showOtpHint />
 
-        {/* Step progress */}
-        <div className="flex items-center gap-1 text-xs">
+        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs overflow-x-auto pb-1 -mx-1 px-1">
           {[
-            { label: 'Step 1', title: 'Verify identity', active: step === 'otp' || step === 'form' || step === 'verifying' || step === 'done' },
-            { label: 'Step 2', title: 'Fill shop details', active: step === 'form' || step === 'verifying' || step === 'done' },
-            { label: 'Step 3', title: 'Checking...', active: step === 'verifying' || step === 'done' },
+            { label: 'S1', title: 'Identity', active: step === 'otp' || step === 'form' || step === 'verifying' || step === 'done' },
+            { label: 'S2', title: 'Details', active: step === 'form' || step === 'verifying' || step === 'done' },
+            { label: 'S3', title: 'Checks', active: step === 'verifying' || step === 'done' },
           ].map((s, i) => (
-            <div key={s.label} className="flex items-center gap-1">
-              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors ${s.active ? 'bg-navy-800 text-white' : 'bg-surface-100 text-navy-400'
-                }`}>
-                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${s.active ? 'bg-white/20' : 'bg-surface-200'
-                  }`}>{i + 1}</span>
-                <span className="hidden sm:inline font-medium">{s.title}</span>
+            <div key={s.label} className="flex items-center gap-1 shrink-0">
+              <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-colors ${s.active ? 'bg-navy-800 text-white' : 'bg-surface-100 text-navy-400'}`}>
+                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${s.active ? 'bg-white/20' : 'bg-surface-200'}`}>{i + 1}</span>
+                <span className="font-semibold">{s.title}</span>
               </div>
-              {i < 2 && <span className="text-surface-300">›</span>}
+              {i < 2 && <span className="text-surface-300 px-0.5">›</span>}
             </div>
           ))}
         </div>
 
-        {/* Page header */}
-        <div>
-          <p className="text-label mb-1.5">Step 1 of 4 — Identity check</p>
-          <h1 className="font-heading font-semibold text-xl lg:text-2xl text-navy-900">
-            Verify your mobile number
-          </h1>
-          <p className="text-navy-500 mt-1.5 text-sm leading-relaxed">
-            We first check who you are, then verify that your shop is real.
-            This step takes less than a minute.
-          </p>
+        <div className="border-l-4 border-navy-800 pl-3 sm:pl-4">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-navy-400 mb-0.5">Step {header.k}</p>
+          <h1 className="font-heading font-semibold text-xl sm:text-2xl text-navy-900 leading-tight">{header.title}</h1>
+          <p className="text-navy-600 mt-1 text-sm leading-snug">{header.sub}</p>
         </div>
 
         {/* ── Step 1: OTP ── */}
@@ -254,29 +281,10 @@ export default function AssessmentPage() {
               transition={{ duration: 0.3 }}
             >
               <Card>
-                <div className="flex flex-col gap-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-navy-50 flex items-center justify-center">
-                      <Phone size={18} className="text-navy-700" />
-                    </div>
-                    <div>
-                      <h2 className="font-heading font-semibold text-navy-900 text-sm">
-                        Enter your mobile number
-                      </h2>
-                      <p className="text-xs text-navy-400 mt-0.5">
-                        We will send a 4-digit code to your mobile to confirm it is you.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Demo hint */}
-                  <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5">
-                    <Info size={14} className="text-blue-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-blue-700 leading-relaxed">
-                      <strong>Demo mode:</strong> Enter any mobile number and use OTP{' '}
-                      <span className="font-mono font-bold bg-blue-100 px-1.5 py-0.5 rounded text-blue-800">1234</span>{' '}
-                      to continue.
-                    </p>
+                <div className="flex flex-col gap-4 sm:gap-5">
+                  <div className="rounded-xl bg-surface-50 border border-surface-200 px-3 py-2.5">
+                    <p className="text-xs font-semibold text-navy-800">10-digit mobile</p>
+                    <p className="text-[11px] text-navy-500 mt-0.5">We send a 4-digit SMS (demo: see yellow banner).</p>
                   </div>
 
                   <div className="divider" />
@@ -298,6 +306,7 @@ export default function AssessmentPage() {
                         onClick={handleSendOtp}
                         loading={otpLoading}
                         disabled={phone.length < 10}
+                        className="min-h-[48px] justify-center"
                       >
                         Send OTP
                       </Button>
@@ -309,14 +318,9 @@ export default function AssessmentPage() {
                         animate={{ opacity: 1, y: 0 }}
                         className="flex flex-col gap-4"
                       >
-                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                          <p className="text-xs text-emerald-700 font-medium mb-0.5">
-                            OTP sent to +91 {phone}
-                          </p>
-                          <p className="text-xs text-emerald-600">
-                            Demo mode: use code{' '}
-                            <span className="font-mono font-bold bg-emerald-100 px-1.5 py-0.5 rounded">1234</span>
-                          </p>
+                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/90 px-3 py-2.5">
+                          <p className="text-xs font-semibold text-emerald-900">Sent to +91 {phone}</p>
+                          <p className="text-[11px] text-emerald-800 mt-0.5">Enter the code from the yellow demo strip.</p>
                         </div>
 
                         <Input
@@ -330,10 +334,11 @@ export default function AssessmentPage() {
                           error={otpError}
                         />
 
-                        <div className="flex gap-3">
+                        <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                           <Button
                             variant="ghost"
                             size="sm"
+                            className="min-h-[44px]"
                             onClick={() => {
                               setOtpSent(false)
                               setOtp('')
@@ -345,8 +350,9 @@ export default function AssessmentPage() {
                             onClick={handleVerifyOtp}
                             loading={otpLoading}
                             disabled={otp.length < 4}
+                            className="min-h-[48px] justify-center"
                           >
-                            Verify and continue
+                            Continue
                             <ArrowRight size={15} />
                           </Button>
                         </div>
@@ -366,31 +372,86 @@ export default function AssessmentPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.3 }}
-              className="flex flex-col gap-5"
+              className="flex flex-col gap-4 sm:gap-5"
             >
-              {/* Step context */}
-              <div className="bg-navy-50 border border-navy-200 rounded-lg px-4 py-3">
-                <p className="text-xs font-semibold text-navy-800 mb-0.5">Step 2 — Your shop details</p>
-                <p className="text-xs text-navy-600 leading-relaxed">
-                  Fill in your shop name, address, and the type of shop you run.
-                  We use this to check if your business appears on Google Maps and GST records.
+              <div className="rounded-xl border-l-4 border-l-navy-800 border border-surface-200 bg-surface-50/80 px-3 py-2.5 sm:px-4">
+                <p className="text-xs font-bold text-navy-900">Shop form</p>
+                <p className="text-[11px] text-navy-600 mt-0.5 leading-snug">
+                  Set location at your shop first (browser GPS), then name, type, and photos.
                 </p>
               </div>
 
               {/* Business details */}
               <Card>
-                <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-4 sm:gap-5">
                   <div>
-                    <h2 className="font-heading font-semibold text-navy-900 text-sm">
+                    <h2 className="font-heading font-semibold text-navy-900 text-base">
                       Shop information
                     </h2>
-                    <p className="text-xs text-navy-400 mt-1">
-                      Enter the details exactly as they appear on your shop sign or business registration.
-                    </p>
+                    <p className="text-[11px] text-navy-500 mt-1 leading-snug">Use the same spelling as on your board.</p>
                   </div>
                   <div className="divider" />
 
                   <div className="flex flex-col gap-4">
+                    <div className="rounded-xl border border-surface-200 bg-white px-3 py-3 sm:px-4 space-y-3">
+                      <div className="flex items-start gap-2">
+                        <div className="mt-0.5 rounded-lg bg-navy-800 text-white p-1.5 shrink-0">
+                          <MapPin size={16} aria-hidden />
+                        </div>
+                        <div className="min-w-0 space-y-1">
+                          <p className="text-xs font-bold text-navy-900">Shop location</p>
+                          <p className="text-[11px] text-navy-600 leading-snug">
+                            Allow location while you are at the shop. We fill the address from your GPS (OpenStreetMap); you can edit it.
+                          </p>
+                          <p className="text-[10px] text-navy-500 leading-snug">
+                            Needs HTTPS or localhost. PIN may be missing — enter all 6 digits if needed.
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={handleUseShopLocation}
+                        loading={geoLoading}
+                        disabled={geoLoading}
+                        className="w-full min-h-[48px] justify-center gap-2"
+                      >
+                        <MapPin size={16} />
+                        Use my current location
+                      </Button>
+                      {geoError && (
+                        <p className="text-[11px] text-red-700 bg-red-50 border border-red-200 rounded-lg px-2.5 py-2 leading-snug">
+                          {geoError}
+                        </p>
+                      )}
+                      {geoHint && !geoError && (
+                        <p className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-2 leading-snug">
+                          {geoHint}
+                        </p>
+                      )}
+                    </div>
+
+                    <Input
+                      label="Address"
+                      placeholder="Street, locality, landmark"
+                      value={form.address}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, address: e.target.value }))
+                      }
+                    />
+
+                    <Input
+                      label="Pincode"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="6-digit pincode"
+                      maxLength={6}
+                      value={form.pincode}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, pincode: e.target.value.replace(/\D/g, '') }))
+                      }
+                    />
+
                     <Input
                       label="Business name"
                       placeholder="As it appears on your signboard"
@@ -407,29 +468,10 @@ export default function AssessmentPage() {
                     />
 
                     <Input
-                      label="Address"
-                      placeholder="Street, locality, landmark"
-                      value={form.address}
-                      onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
-                    />
-
-                    <Input
-                      label="Pincode"
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="6-digit pincode"
-                      maxLength={6}
-                      value={form.pincode}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, pincode: e.target.value.replace(/\D/g, '') }))
-                      }
-                    />
-
-                    <Input
                       label="GST number (GSTIN)"
                       optional
                       placeholder="15-character GST number"
-                      hint="Optional — but adding your GST number gives you a higher trust score."
+                      hint="Optional — boosts trust if valid."
                       value={form.gstin}
                       onChange={(e) =>
                         setForm((f) => ({ ...f, gstin: e.target.value.toUpperCase() }))
@@ -439,26 +481,19 @@ export default function AssessmentPage() {
                 </div>
               </Card>
 
-              {/* Step 3 context */}
-              <div className="bg-navy-50 border border-navy-200 rounded-lg px-4 py-3">
-                <p className="text-xs font-semibold text-navy-800 mb-0.5">Step 3 — Take shop photos</p>
-                <p className="text-xs text-navy-600 leading-relaxed">
-                  Take 3 to 5 photos of your shop right now using your phone camera.
-                  Include: shelves, counter, shop entrance. Our AI will scan these to check your stock and shop quality.
-                </p>
+              <div className="rounded-xl border-l-4 border-l-emerald-600 border border-surface-200 bg-emerald-50/40 px-3 py-2.5 sm:px-4">
+                <p className="text-xs font-bold text-navy-900">Five live photos</p>
+                <p className="text-[11px] text-navy-700 mt-0.5 leading-snug">Camera only — follow the prompt for each slot (shelves, counter, entrance…).</p>
               </div>
 
               {/* Image upload */}
 <Card>
-  <div className="flex flex-col gap-5">
+  <div className="flex flex-col gap-4 sm:gap-5">
     <div>
-      <h2 className="font-heading font-semibold text-navy-900 text-sm">
+      <h2 className="font-heading font-semibold text-navy-900 text-base">
         Shop photos
       </h2>
-      <p className="text-xs text-navy-400 mt-1">
-        Take 5 photos using your camera right now — no gallery uploads allowed.
-        Each photo has specific instructions shown before you capture.
-      </p>
+      <p className="text-[11px] text-navy-500 mt-1 leading-snug">No gallery pick — capture in flow.</p>
     </div>
 
     <div className="divider" />
@@ -475,18 +510,19 @@ export default function AssessmentPage() {
               {/* Submit */}
               <div className="flex flex-col gap-3">
               {!formValid && (
-  <p className="text-xs text-navy-400 text-center">
+  <p className="text-xs text-navy-500 text-center font-medium rounded-lg bg-surface-100 border border-surface-200 py-2 px-3">
     {!allPhotosCaptured
-      ? `${images.filter(Boolean).length} of 5 photos taken — capture all 5 to continue.`
-      : 'Fill in shop name, type, address, and pincode to continue.'}
+      ? `${images.filter(Boolean).length}/5 photos`
+      : 'Complete address, PIN, name, type'}
   </p>
 )}
 <Button
   size="lg"
-  disabled={!formValid}           // now includes allPhotosCaptured
+  disabled={!formValid}
   onClick={runLayer1Verification}
+  className="min-h-[52px] w-full justify-center"
 >
-  Check my business
+  Run checks
   <ArrowRight size={16} />
 </Button>
               </div>
@@ -503,14 +539,14 @@ export default function AssessmentPage() {
               className="flex flex-col gap-4"
             >
               {/* What's happening */}
-              <div className="bg-navy-50 border border-navy-200 rounded-lg px-4 py-3">
-                <p className="text-xs font-semibold text-navy-800 mb-0.5">
-                  {step === 'verifying' ? 'Checking your business...' : 'Step 4 — Verification complete'}
+              <div className="rounded-xl border-l-4 border-l-navy-800 border border-surface-200 bg-surface-50 px-3 py-2.5 sm:px-4">
+                <p className="text-xs font-bold text-navy-900">
+                  {step === 'verifying' ? 'Running 3 checks…' : 'All checks finished'}
                 </p>
-                <p className="text-xs text-navy-600 leading-relaxed">
+                <p className="text-[11px] text-navy-600 mt-0.5 leading-snug">
                   {step === 'verifying'
-                    ? 'We are running 3 checks: confirming your business exists, looking up GST records, and scanning your shop photos for what you sell.'
-                    : 'All checks are done. Review your results below and proceed to the next step.'}
+                    ? 'Listing match · GST · Photo match'
+                    : 'Scroll the cards, then continue when ready.'}
                 </p>
               </div>
 
@@ -554,6 +590,8 @@ export default function AssessmentPage() {
                         pincode: form.pincode,
                         address: form.address,
                         phone: form.phone,
+                        latitude: form.latitude,
+                        longitude: form.longitude,
                       },
                     })
                   }}

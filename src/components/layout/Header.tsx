@@ -97,6 +97,18 @@ export function Header() {
             >
               Docs
             </Link>
+            <Link
+              to="/dashboard"
+              className={`
+                px-3 py-1.5 rounded text-sm font-medium border transition-colors duration-150
+                ${location.pathname.startsWith('/dashboard')
+                  ? 'bg-navy-50 text-navy-800 border-navy-200'
+                  : 'bg-surface-100 text-navy-800 border-surface-200 hover:bg-surface-200 hover:border-surface-300'
+                }
+              `}
+            >
+              Officer Dashboard
+            </Link>
             {!isAssessment && (
               <Link
                 to="/assess"

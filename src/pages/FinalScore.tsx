@@ -13,6 +13,8 @@ interface LocationState {
   pincode?: string
   address?: string
   phone?: string
+  latitude?: number
+  longitude?: number
   layer1Result?: Layer1Result
   layer2Result?: Layer2Result
   layer3Result?: Layer3Result
@@ -24,23 +26,23 @@ interface LocationState {
 const NEXT_STEPS = [
   {
     step: '1',
-    title: 'Application received',
-    desc: 'Poonawalla Fincorp has received your application and it is being reviewed by our team.',
+    title: 'Received',
+    desc: 'Team has your application.',
   },
   {
     step: '2',
-    title: 'Initial assessment',
-    desc: 'Our system will process your shop details and photos within 24 hours.',
+    title: 'Processing',
+    desc: 'Details & photos — usually within 24h.',
   },
   {
     step: '3',
-    title: 'Loan officer contact',
-    desc: 'A loan officer may call you within 2–3 working days if additional information is needed.',
+    title: 'Possible call',
+    desc: 'Officer may ring in 2–3 working days if needed.',
   },
   {
     step: '4',
-    title: 'Decision',
-    desc: 'After an officer reviews your file, you will get updates by SMS on the number you registered. Any score or loan estimate is shared only after approval.',
+    title: 'Outcome',
+    desc: 'SMS updates on your number; amounts after approval only.',
   },
 ]
 
@@ -50,6 +52,7 @@ export default function FinalScorePage() {
   const state = (location.state ?? {}) as LocationState
 
   const { businessName, businessType, pincode, address, phone,
+          latitude, longitude,
           layer1Result, layer2Result, layer3Result, layer4Result } = state
 
   const [refId, setRefId] = useState('')
@@ -72,13 +75,16 @@ export default function FinalScorePage() {
       pincode: pincode ?? '',
       address: address ?? '',
       phone: phone ?? '',
+      ...(typeof latitude === 'number' && typeof longitude === 'number'
+        ? { latitude, longitude }
+        : {}),
       officerStatus: 'pending_review',
       layer1Result,
       layer2Result,
       layer3Result,
       layer4Result,
     })
-  }, [layer1Result, layer2Result, layer3Result, layer4Result, businessName, businessType, pincode, address, phone])
+  }, [layer1Result, layer2Result, layer3Result, layer4Result, businessName, businessType, pincode, address, phone, latitude, longitude])
 
   function copyRefId() {
     navigator.clipboard.writeText(refId).catch(() => {})
@@ -90,15 +96,17 @@ export default function FinalScorePage() {
 
   if (!layer4Result || !layer2Result || !layer3Result) {
     return (
-      <div className="container-page py-16 max-w-xl mx-auto text-center flex flex-col items-center gap-5">
-        <AlertTriangle size={32} className="text-amber-500" />
-        <h2 className="font-heading font-semibold text-navy-900 text-xl">
-          Assessment incomplete
+      <div className="container-page py-12 sm:py-16 max-w-md mx-auto text-center flex flex-col items-center gap-4 px-4">
+        <AlertTriangle size={28} className="text-amber-500" />
+        <h2 className="font-heading font-semibold text-navy-900 text-lg sm:text-xl">
+          Not finished yet
         </h2>
-        <p className="text-navy-500 text-sm">
-          Please complete all steps before viewing this page.
+        <p className="text-navy-500 text-sm leading-snug">
+          Finish all steps to see this screen.
         </p>
-        <Button onClick={() => navigate('/assess')}>Restart assessment</Button>
+        <Button onClick={() => navigate('/assess')} className="min-h-[48px] w-full max-w-xs justify-center">
+          Restart
+        </Button>
       </div>
     )
   }
@@ -106,8 +114,8 @@ export default function FinalScorePage() {
   // ─── Submission success screen ──────────────────────────────────────────────
 
   return (
-    <div className="container-page py-8">
-      <div className="max-w-xl mx-auto flex flex-col gap-6">
+    <div className="container-page py-6 sm:py-8">
+      <div className="max-w-xl mx-auto flex flex-col gap-4 sm:gap-5 px-1 sm:px-0">
 
         {/* Mock data banner */}
         <MockDataBanner />
@@ -118,7 +126,7 @@ export default function FinalScorePage() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4 }}
         >
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 flex flex-col items-center text-center gap-4">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 sm:p-6 flex flex-col items-center text-center gap-3 sm:gap-4">
             {/* Animated checkmark */}
             <motion.div
               initial={{ scale: 0 }}
@@ -130,33 +138,34 @@ export default function FinalScorePage() {
             </motion.div>
 
             <div>
-              <h1 className="font-heading font-semibold text-xl text-emerald-800">
-                Application submitted!
+              <h1 className="font-heading font-semibold text-lg sm:text-xl text-emerald-800 leading-tight">
+                Submitted
               </h1>
-              <p className="text-emerald-700 text-sm mt-1">
-                Your application has been sent to <strong>Poonawalla Fincorp</strong>.
+              <p className="text-emerald-800 text-xs sm:text-sm mt-1 leading-snug">
+                Sent to <strong>Poonawalla Fincorp</strong>.
               </p>
             </div>
 
             {/* Business name */}
             {businessName && (
-              <div className="bg-white rounded-lg border border-emerald-200 px-4 py-2.5 w-full">
-                <p className="text-xs text-navy-400 mb-0.5">Business name</p>
-                <p className="font-heading font-semibold text-navy-900 text-sm">{businessName}</p>
+              <div className="bg-white rounded-xl border border-emerald-200 px-3 py-2 w-full text-left">
+                <p className="text-[11px] text-navy-500 mb-0.5">Business</p>
+                <p className="font-heading font-semibold text-navy-900 text-sm truncate">{businessName}</p>
               </div>
             )}
 
             {/* Reference ID */}
-            <div className="bg-white rounded-xl border-2 border-emerald-300 px-5 py-4 w-full">
-              <p className="text-xs text-navy-400 mb-1.5">Your reference number</p>
-              <div className="flex items-center justify-center gap-2">
-                <span className="font-mono font-bold text-2xl text-navy-900 tracking-widest">
+            <div className="bg-white rounded-xl border-2 border-emerald-300 px-4 py-3 sm:px-5 sm:py-4 w-full">
+              <p className="text-[11px] text-navy-500 mb-1">Reference</p>
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                <span className="font-mono font-bold text-xl sm:text-2xl text-navy-900 tracking-widest break-all text-center">
                   {refId || '...'}
                 </span>
                 <button
                   onClick={copyRefId}
-                  className="p-1.5 rounded-lg bg-surface-100 hover:bg-surface-200 transition-colors"
+                  className="p-2.5 min-h-[44px] min-w-[44px] rounded-lg bg-surface-100 hover:bg-surface-200 transition-colors inline-flex items-center justify-center"
                   title="Copy reference ID"
+                  type="button"
                 >
                   {copied
                     ? <Check size={14} className="text-emerald-600" />
@@ -164,8 +173,8 @@ export default function FinalScorePage() {
                   }
                 </button>
               </div>
-              <p className="text-xs text-navy-400 mt-2">
-                Save this number — you may need it when speaking to our team.
+              <p className="text-[11px] text-navy-500 mt-2 leading-snug">
+                Keep this for calls or branch visits.
               </p>
             </div>
           </div>
@@ -176,25 +185,25 @@ export default function FinalScorePage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          className="bg-white border border-surface-200 rounded-xl p-5"
+          className="bg-white border border-surface-200 rounded-xl p-4 sm:p-5"
         >
-          <h2 className="font-heading font-semibold text-navy-900 text-sm mb-4">
-            What happens next?
+          <h2 className="font-heading font-semibold text-navy-900 text-sm mb-3">
+            Next steps
           </h2>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             {NEXT_STEPS.map((s, i) => (
-              <div key={s.step} className="flex gap-3">
-                <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                  <div className="w-6 h-6 rounded-full bg-navy-800 text-white flex items-center justify-center text-xs font-bold">
+              <div key={s.step} className="flex gap-2.5">
+                <div className="flex flex-col items-center gap-0.5 flex-shrink-0 pt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-navy-800 text-white flex items-center justify-center text-[11px] font-bold">
                     {s.step}
                   </div>
                   {i < NEXT_STEPS.length - 1 && (
-                    <div className="w-px flex-1 bg-surface-200 min-h-[16px]" />
+                    <div className="w-px flex-1 bg-surface-200 min-h-[12px]" />
                   )}
                 </div>
-                <div className="pb-3">
-                  <p className="text-sm font-medium text-navy-900">{s.title}</p>
-                  <p className="text-xs text-navy-500 mt-0.5 leading-relaxed">{s.desc}</p>
+                <div className="pb-2 min-w-0">
+                  <p className="text-sm font-semibold text-navy-900">{s.title}</p>
+                  <p className="text-[11px] text-navy-500 mt-0.5 leading-snug">{s.desc}</p>
                 </div>
               </div>
             ))}
@@ -206,33 +215,32 @@ export default function FinalScorePage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.3 }}
-          className="bg-navy-50 border border-navy-200 rounded-xl px-5 py-4"
+          className="bg-navy-50 border border-navy-200 rounded-xl px-4 py-3 sm:px-5 sm:py-4"
         >
-          <p className="text-xs font-semibold text-navy-800 mb-1">Need help?</p>
-          <p className="text-xs text-navy-600 leading-relaxed">
-            If you have questions about your application, call Poonawalla Fincorp customer support
-            or visit your nearest branch with your reference number{' '}
-            <span className="font-mono font-semibold text-navy-800">{refId}</span>.
+          <p className="text-xs font-bold text-navy-900 mb-0.5">Help</p>
+          <p className="text-[11px] text-navy-600 leading-snug">
+            Call support or visit a branch with ref{' '}
+            <span className="font-mono font-semibold text-navy-800 break-all">{refId}</span>.
           </p>
         </motion.div>
 
         {/* Actions */}
-        <div className="flex justify-center">
+        <div className="flex justify-stretch sm:justify-center">
           <Button
             variant="secondary"
             onClick={() => navigate('/assess')}
+            className="min-h-[48px] w-full sm:w-auto justify-center"
           >
             <RotateCcw size={14} />
-            Submit another application
+            Another application
           </Button>
         </div>
 
         {/* Disclaimer */}
-        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-          <p className="text-xs font-semibold text-amber-800 mb-1">Important notice</p>
-          <p className="text-xs text-amber-700 leading-relaxed">
-            This is a demo version — data is stored locally on this device only and not sent to any server.
-            All results are mock data. Actual loan decisions are made by Poonawalla Fincorp after proper verification.
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 sm:px-4">
+          <p className="text-xs font-bold text-amber-900 mb-0.5">Demo</p>
+          <p className="text-[11px] text-amber-800 leading-snug">
+            Local-only mock data — not a real loan decision.
           </p>
         </div>
 

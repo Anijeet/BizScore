@@ -1,11 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import {
-  ArrowLeft, ShieldCheck, ShieldAlert, ShieldX,
-  TrendingUp, BarChart3, AlertTriangle, CheckCircle2,
-  MapPin, Eye, Calendar, Building2, Gavel,
-} from 'lucide-react'
+import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { DashboardHeader } from '@/components/layout/DashboardHeader'
 import { ScoreRing } from '@/components/ui/ScoreRing'
 import { Button } from '@/components/ui/Button'
@@ -16,38 +12,36 @@ import {
   type SavedApplication,
 } from '@/services/storage'
 import type { VoteSignal, Layer2Result, Layer3Result, Layer4Result } from '@/types'
+import { getIndustryReferenceImages } from '@/data/industryReferenceImages'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const REC_CONFIG = {
   pre_approve: {
-    icon: ShieldCheck,
-    iconColor: 'text-emerald-500',
+    dotClass: 'bg-emerald-500',
     bg: 'bg-emerald-50',
     border: 'border-emerald-200',
     label: 'Good to go',
     labelColor: 'text-emerald-700',
-    description: 'All signals pass threshold. Application can be fast-tracked for loan disbursement. Field verification optional.',
+    description: 'Signals above threshold — optional field check before disbursement.',
     loanMultiplier: 3,
   },
   needs_verification: {
-    icon: ShieldAlert,
-    iconColor: 'text-amber-500',
+    dotClass: 'bg-amber-500',
     bg: 'bg-amber-50',
     border: 'border-amber-200',
     label: 'Needs field visit',
     labelColor: 'text-amber-700',
-    description: 'Score is acceptable but some signals have uncertainty. Schedule a field visit before disbursement.',
+    description: 'Some uncertainty — schedule a visit before disbursement.',
     loanMultiplier: 2,
   },
   reject: {
-    icon: ShieldX,
-    iconColor: 'text-red-500',
+    dotClass: 'bg-red-500',
     bg: 'bg-red-50',
     border: 'border-red-200',
     label: 'Not approved',
     labelColor: 'text-red-700',
-    description: 'Insufficient signal quality or high fraud risk detected. Do not proceed without complete re-submission.',
+    description: 'High risk or weak signals — do not proceed without a fresh file.',
     loanMultiplier: 0,
   },
 }
@@ -58,10 +52,17 @@ const STATUS_COLOR: Record<VoteSignal['status'], string> = {
   skipped: 'bg-surface-300',
 }
 
-const STATUS_LABEL: Record<VoteSignal['status'], string> = {
-  active: 'Live signal',
-  proxy: 'Proxy / estimated',
-  skipped: 'Not available',
+/** Short badge text for dense layouts */
+const STATUS_SHORT: Record<VoteSignal['status'], string> = {
+  active: 'Live',
+  proxy: 'Est.',
+  skipped: '—',
+}
+
+const REC_LABEL: Record<Layer4Result['recommendation'], string> = {
+  pre_approve: 'Good to go',
+  needs_verification: 'Needs visit',
+  reject: 'Not approved',
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -83,20 +84,31 @@ function formatDate(iso: string) {
 
 function Section({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-white rounded-xl border border-surface-200 p-5 ${className}`}>
+    <div className={`bg-white rounded-2xl border border-surface-200 p-4 sm:p-6 shadow-sm ${className}`}>
       {children}
     </div>
   )
 }
 
-function SectionTitle({ icon: Icon, title, sub }: { icon: React.ElementType; title: string; sub?: string }) {
+/** Section header: colour bar + title (no decorative icons). */
+function SectionHeading({
+  title,
+  sub,
+  accent = 'navy',
+}: {
+  title: string
+  sub?: string
+  accent?: 'navy' | 'emerald' | 'amber' | 'blue'
+}) {
+  const bar =
+    accent === 'emerald' ? 'border-l-emerald-600' :
+    accent === 'amber' ? 'border-l-amber-500' :
+    accent === 'blue' ? 'border-l-blue-600' :
+    'border-l-navy-700'
   return (
-    <div className="flex items-center gap-2 mb-4">
-      <Icon size={16} className="text-navy-600 flex-shrink-0" />
-      <div>
-        <h3 className="font-heading font-semibold text-navy-900 text-sm">{title}</h3>
-        {sub && <p className="text-xs text-navy-400">{sub}</p>}
-      </div>
+    <div className={`mb-4 sm:mb-5 border-l-4 ${bar} pl-3 sm:pl-4`}>
+      <h3 className="font-heading font-semibold text-navy-900 text-base sm:text-lg leading-tight">{title}</h3>
+      {sub && <p className="text-xs sm:text-sm text-navy-500 mt-1 leading-snug max-w-3xl">{sub}</p>}
     </div>
   )
 }
@@ -160,19 +172,19 @@ const OFFICER_REVIEW_LABEL: Record<
   { label: string; bg: string; text: string; border: string }
 > = {
   pending_review: {
-    label: 'Awaiting your review',
+    label: 'Awaiting review',
     bg: 'bg-amber-50',
     text: 'text-amber-800',
     border: 'border-amber-200',
   },
   approved: {
-    label: 'Application approved',
+    label: 'Approved',
     bg: 'bg-emerald-50',
     text: 'text-emerald-800',
     border: 'border-emerald-200',
   },
   rejected: {
-    label: 'Application rejected',
+    label: 'Rejected',
     bg: 'bg-red-50',
     text: 'text-red-800',
     border: 'border-red-200',
@@ -196,10 +208,10 @@ export default function ApplicationDetailPage() {
     return (
       <div className="min-h-screen bg-surface-50 flex flex-col">
         <DashboardHeader />
-        <div className="flex flex-col items-center justify-center flex-1 gap-5 p-8">
-          <AlertTriangle size={32} className="text-amber-500" />
+        <div className="flex flex-col items-center justify-center flex-1 gap-5 p-8 max-w-md mx-auto text-center">
+          <div className="w-16 h-2 rounded-full bg-amber-400" aria-hidden />
           <h2 className="font-heading font-semibold text-navy-900 text-xl">Application not found</h2>
-          <p className="text-navy-500 text-sm">The application ID does not exist or has been cleared.</p>
+          <p className="text-navy-500 text-sm">This reference ID is missing or was cleared from the browser.</p>
           <button
             onClick={() => navigate('/dashboard')}
             className="px-4 py-2 rounded-lg bg-navy-800 text-white text-sm font-medium hover:bg-navy-700 transition-colors"
@@ -212,6 +224,7 @@ export default function ApplicationDetailPage() {
   }
 
   const { businessName, businessType, pincode, address, submittedAt,
+          latitude: appLat, longitude: appLon,
           layer1Result, layer2Result, layer3Result, layer4Result } = app
 
   const officerStatus = getOfficerStatus(app)
@@ -231,7 +244,6 @@ export default function ApplicationDetailPage() {
   }
 
   const config = REC_CONFIG[layer4Result.recommendation]
-  const Icon = config.icon
   const cf = layer4Result.cashFlowEstimate
   const monthlyIncomeMedian = Math.round((cf.monthlyIncomeMin + cf.monthlyIncomeMax) / 2)
   const loanAmount = config.loanMultiplier * monthlyIncomeMedian
@@ -240,7 +252,7 @@ export default function ApplicationDetailPage() {
     <div className="min-h-screen bg-surface-50 flex flex-col">
       <DashboardHeader />
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-8 flex flex-col gap-6">
+      <main className="flex-1 w-full max-w-[min(100%-1rem,1180px)] mx-auto px-3 sm:px-6 lg:px-10 py-6 sm:py-8 flex flex-col gap-5 sm:gap-6 pb-10">
 
         {/* Back + breadcrumb */}
         <div className="flex items-center gap-2">
@@ -255,26 +267,40 @@ export default function ApplicationDetailPage() {
           <span className="text-sm text-navy-700 font-medium">{businessName}</span>
         </div>
 
+        {app.isBundledDemo && (
+          <div className="rounded-2xl border border-indigo-200 border-l-4 border-l-indigo-500 bg-indigo-50/90 px-4 py-3 sm:px-5">
+            <p className="text-xs font-bold uppercase tracking-wide text-indigo-900">Demo case</p>
+            <p className="text-sm text-indigo-900/90 mt-1 leading-snug">
+              {app.bundledDemoNote ?? 'Synthetic Indian sample — not a real borrower.'}
+            </p>
+          </div>
+        )}
+
         {/* Application meta strip */}
-        <div className="bg-white rounded-xl border border-surface-200 px-5 py-4">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <h1 className="font-heading font-semibold text-xl text-navy-900">{businessName}</h1>
-              <div className="flex flex-wrap items-center gap-3 text-xs text-navy-500">
-                <span className="flex items-center gap-1 capitalize">
-                  <Building2 size={12} /> {businessType}
-                </span>
-                <span className="flex items-center gap-1">
-                  <MapPin size={12} /> {address} · {pincode}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Calendar size={12} /> {formatDate(submittedAt)}
-                </span>
+        <div className="bg-white rounded-2xl border border-surface-200 shadow-sm overflow-hidden border-t-4 border-t-navy-800">
+          <div className="px-4 py-4 sm:px-6 sm:py-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <h1 className="font-heading font-semibold text-xl sm:text-2xl text-navy-900 leading-tight">{businessName}</h1>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <span className="text-[11px] sm:text-xs font-semibold capitalize bg-surface-100 text-navy-800 px-2.5 py-1 rounded-lg border border-surface-200">{businessType}</span>
+                  <span className="text-[11px] sm:text-xs font-mono bg-surface-100 text-navy-800 px-2.5 py-1 rounded-lg border border-surface-200">{pincode}</span>
+                  <span className="text-[11px] sm:text-xs text-navy-600 bg-surface-50 px-2.5 py-1 rounded-lg border border-surface-200 tabular-nums">{formatDate(submittedAt)}</span>
+                </div>
+                <p className="text-sm text-navy-600 mt-3 leading-relaxed border-t border-surface-100 pt-3">{address}</p>
+                {typeof appLat === 'number' && typeof appLon === 'number' && (
+                  <p className="text-[11px] text-navy-500 mt-2 font-mono tabular-nums">
+                    Shop GPS (applicant): {appLat.toFixed(5)}, {appLon.toFixed(5)}
+                  </p>
+                )}
+              </div>
+              <div className="shrink-0 sm:text-right">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-navy-400">Ref</p>
+                <p className="font-mono text-xs sm:text-sm font-semibold text-navy-900 bg-surface-100 px-3 py-2 rounded-xl border border-surface-200 mt-1 break-all sm:max-w-[220px] sm:ml-auto">
+                  {app.id}
+                </p>
               </div>
             </div>
-            <span className="font-mono text-xs bg-surface-100 px-3 py-1.5 rounded-lg text-navy-700 font-medium">
-              {app.id}
-            </span>
           </div>
         </div>
 
@@ -282,44 +308,35 @@ export default function ApplicationDetailPage() {
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`rounded-xl border px-5 py-4 ${officerBadge.bg} ${officerBadge.border}`}
+          className={`rounded-2xl border px-4 py-4 sm:px-5 sm:py-5 ${officerBadge.bg} ${officerBadge.border}`}
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-white/80 border border-surface-200 flex items-center justify-center flex-shrink-0">
-                <Gavel size={18} className="text-navy-700" />
-              </div>
-              <div>
-                <p className={`text-sm font-semibold ${officerBadge.text}`}>{officerBadge.label}</p>
-                <p className="text-xs text-navy-600 mt-1 leading-relaxed max-w-xl">
+            <div className="min-w-0">
+                <p className={`text-sm font-bold ${officerBadge.text}`}>{officerBadge.label}</p>
+                <p className="text-xs text-navy-700 mt-1.5 leading-snug max-w-2xl">
                   {officerStatus === 'pending_review' && (
-                    <>
-                      Review the BizScore report below. When you <strong>approve</strong>, the applicant may be informed
-                      that their file passed officer review (in production, via SMS or branch process).
-                      Scores are never shown to the business on the public form — only here.
-                    </>
+                    <>Use <strong className="text-navy-900">Approve</strong> or <strong className="text-navy-900">Reject</strong> after you read the signals below. Public applicants never see scores here.</>
                   )}
                   {officerStatus === 'approved' && (
-                    <>You approved this application. Record your next steps in the core banking system (demo: status saved in this browser only).</>
+                    <>Marked approved in this browser demo — log the real decision in core banking.</>
                   )}
                   {officerStatus === 'rejected' && (
-                    <>You rejected this application. The business side does not show scores; they only saw submission confirmation with their reference ID.</>
+                    <>Rejected in this session. Applicant only had their ref ID on submit — no scores shown there.</>
                   )}
                 </p>
-              </div>
             </div>
             {officerStatus === 'pending_review' && (
-              <div className="flex flex-wrap gap-2 sm:flex-shrink-0">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:flex-shrink-0 w-full sm:w-auto">
                 <Button
                   size="md"
                   onClick={handleApprove}
-                  className="!bg-emerald-600 hover:!bg-emerald-700 focus-visible:!ring-emerald-500 !text-white"
+                  className="!bg-emerald-600 hover:!bg-emerald-700 focus-visible:!ring-emerald-500 !text-white min-h-[48px] w-full sm:w-auto justify-center"
                 >
-                  <CheckCircle2 size={16} />
-                  Approve application
+                  <CheckCircle2 size={16} className="shrink-0" />
+                  Approve
                 </Button>
-                <Button size="md" variant="danger" onClick={handleReject}>
-                  Reject application
+                <Button size="md" variant="danger" onClick={handleReject} className="min-h-[48px] w-full sm:w-auto justify-center">
+                  Reject
                 </Button>
               </div>
             )}
@@ -328,29 +345,29 @@ export default function ApplicationDetailPage() {
 
         {/* ── Recommendation card ── */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-          <div className={`rounded-xl border p-6 ${config.bg} ${config.border}`}>
-            <div className="flex items-start gap-5 flex-wrap">
-              <div className="flex flex-col items-center gap-2 flex-shrink-0">
-                <ScoreRing score={layer4Result.weightedScore} size={84} strokeWidth={8} />
-                <span className="text-xs text-navy-500">Store score</span>
+          <div className={`rounded-2xl border p-5 sm:p-6 ${config.bg} ${config.border} border-l-4 border-l-navy-900/20`}>
+            <div className="flex flex-col sm:flex-row sm:items-start gap-6 flex-wrap">
+              <div className="flex flex-col items-center gap-2 flex-shrink-0 mx-auto sm:mx-0">
+                <ScoreRing score={layer4Result.weightedScore} size={88} strokeWidth={8} />
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-navy-500">Store score</span>
               </div>
-              <div className="flex-1 min-w-[200px]">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Icon size={18} className={config.iconColor} />
-                  <span className={`font-heading font-semibold text-base ${config.labelColor}`}>
+              <div className="flex-1 min-w-0 text-center sm:text-left">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  <span className={`inline-block w-2.5 h-2.5 rounded-full shrink-0 ${config.dotClass}`} aria-hidden />
+                  <span className={`font-heading font-semibold text-lg ${config.labelColor}`}>
                     {config.label}
                   </span>
-                  <span className="text-xs text-navy-500 font-mono">
-                    {layer4Result.storeScoreOutOf100} / 100
+                  <span className="text-xs font-mono font-semibold text-navy-600 bg-white/70 px-2 py-0.5 rounded-md border border-black/5">
+                    {layer4Result.storeScoreOutOf100}/100
                   </span>
                 </div>
-                <p className="text-sm text-navy-700 mt-2 leading-relaxed">{config.description}</p>
+                <p className="text-sm text-navy-800 mt-2 leading-snug max-w-prose mx-auto sm:mx-0">{config.description}</p>
                 {layer4Result.recommendation !== 'reject' && (
-                  <div className="mt-4 bg-white/60 rounded-lg border border-white p-3">
-                    <p className="text-xs text-navy-400 mb-1">Indicative loan eligibility</p>
-                    <p className="font-heading font-semibold text-navy-900 text-lg">{fmtInr(loanAmount)}</p>
-                    <p className="text-xs text-navy-400 mt-0.5">
-                      {config.loanMultiplier}× estimated monthly income · subject to field verification
+                  <div className="mt-4 rounded-xl border border-black/10 bg-white/70 p-4 text-center sm:text-left">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-navy-500">Indicative loan band</p>
+                    <p className="font-heading font-semibold text-navy-900 text-2xl mt-1 tabular-nums">{fmtInr(loanAmount)}</p>
+                    <p className="text-[11px] text-navy-500 mt-1">
+                      {config.loanMultiplier}× est. monthly income · verify in field
                     </p>
                   </div>
                 )}
@@ -362,18 +379,24 @@ export default function ApplicationDetailPage() {
         {/* Layer scores strip */}
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.06 }}
-          className="grid grid-cols-3 gap-3"
+          className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"
         >
           {[
-            { label: 'Identity score', score: layer1Result.overallCredibilityScore, sub: 'Layer 1' },
-            { label: 'Vision score', score: layer2Result.overallVisionScore, sub: 'Layer 2' },
-            { label: 'Geo score', score: layer3Result.overallGeoScore, sub: 'Layer 3' },
+            { label: 'Identity', score: layer1Result.overallCredibilityScore, sub: 'Layer 1' },
+            { label: 'Vision', score: layer2Result.overallVisionScore, sub: 'Layer 2' },
+            { label: 'Geo', score: layer3Result.overallGeoScore, sub: 'Layer 3' },
           ].map((s) => (
-            <div key={s.label} className="bg-white border border-surface-200 rounded-xl p-3 flex flex-col items-center gap-2">
-              <ScoreRing score={s.score} size={52} strokeWidth={5} />
-              <div className="text-center">
-                <p className="text-xs font-medium text-navy-800">{s.label}</p>
-                <p className="text-xs text-navy-400">{s.sub}</p>
+            <div
+              key={s.label}
+              className="bg-white border border-surface-200 rounded-2xl p-4 sm:p-5 flex flex-row sm:flex-col items-center gap-4 sm:gap-3 shadow-sm border-t-4 border-t-navy-700/15"
+            >
+              <div className="shrink-0">
+                <ScoreRing score={s.score} size={56} strokeWidth={5} />
+              </div>
+              <div className="text-left sm:text-center min-w-0 flex-1">
+                <p className="text-sm font-bold text-navy-900">{s.label}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-navy-400 mt-0.5">{s.sub}</p>
+                <p className="text-lg font-heading font-bold text-navy-800 mt-1 tabular-nums">{Math.round(s.score * 100)}<span className="text-sm text-navy-400">%</span></p>
               </div>
             </div>
           ))}
@@ -382,12 +405,12 @@ export default function ApplicationDetailPage() {
         {/* ── Cash flow estimate ── */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.1 }}>
           <Section>
-            <SectionTitle
-              icon={TrendingUp}
+            <SectionHeading
+              accent="emerald"
               title="Cash flow estimate"
-              sub="Tier benchmark × geo footfall index × layer 1 credibility"
+              sub="Blended from tier, footfall, and identity strength."
             />
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
               <CashFlowCell
                 label="Daily sales" primary
                 min={fmtInr(cf.dailySalesMin)} max={fmtInr(cf.dailySalesMax)} median={fmtInr(cf.dailySalesMedian)}
@@ -402,12 +425,12 @@ export default function ApplicationDetailPage() {
                 sub={`${cf.assumedMarginPct}% margin`}
               />
             </div>
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-xs text-navy-400">Confidence score</span>
-                <span className="text-xs font-medium text-navy-700">{Math.round(cf.confidenceScore * 100)}%</span>
+            <div className="rounded-xl bg-surface-50 border border-surface-200 px-4 py-3">
+              <div className="flex justify-between items-baseline mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wide text-navy-500">Confidence</span>
+                <span className="text-sm font-heading font-bold text-navy-900 tabular-nums">{Math.round(cf.confidenceScore * 100)}%</span>
               </div>
-              <div className="h-1.5 bg-surface-200 rounded-full overflow-hidden">
+              <div className="h-2.5 bg-surface-200 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.round(cf.confidenceScore * 100)}%` }}
@@ -418,45 +441,54 @@ export default function ApplicationDetailPage() {
                   }`}
                 />
               </div>
-              <p className="text-xs text-navy-400 mt-1.5">Tier {cf.tierUsed} benchmark</p>
+              <p className="text-[11px] text-navy-500 mt-2">Tier {cf.tierUsed} benchmark curve</p>
             </div>
           </Section>
         </motion.div>
 
-        {/* ── Vote breakdown ── */}
+        {/* ── Stored BizScore analysis (Layer 4) — vote breakdown ── */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.14 }}>
           <Section>
-            <SectionTitle
-              icon={BarChart3}
-              title="Multi-model vote breakdown"
-              sub="Weighted scoring across all available signals"
+            <SectionHeading
+              accent="navy"
+              title="Stored BizScore analysis (Layer 4)"
+              sub="Each row is one model vote; width shows strength."
             />
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2 mb-5 rounded-xl bg-surface-50 border border-surface-200 px-4 py-3">
+              <span className="text-[11px] font-bold uppercase tracking-wide text-navy-500">Model</span>
+              <span className="font-heading text-2xl font-bold text-navy-900 tabular-nums">{layer4Result.storeScoreOutOf100}</span>
+              <span className="text-navy-400 text-sm">/ 100</span>
+              <span className="h-4 w-px bg-surface-300 mx-1 hidden sm:block" aria-hidden />
+              <span className="text-sm font-semibold text-navy-800 bg-white px-2.5 py-1 rounded-lg border border-surface-200">
+                {REC_LABEL[layer4Result.recommendation]}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-6 gap-y-4">
               {layer4Result.votes.map((vote, i) => (
                 <motion.div
                   key={vote.name}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.2, delay: 0.2 + i * 0.05 }}
-                  className="flex flex-col gap-1.5"
+                  className="rounded-xl border border-surface-100 bg-surface-50/50 p-3 sm:p-4"
                 >
-                  <div className="flex items-center justify-between flex-wrap gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-navy-800">{vote.name}</span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded ${
-                        vote.status === 'active' ? 'bg-navy-50 text-navy-500' : 'bg-amber-50 text-amber-600'
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm font-semibold text-navy-900 truncate">{vote.name}</span>
+                      <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
+                        vote.status === 'active' ? 'bg-navy-100 text-navy-700' : 'bg-amber-100 text-amber-800'
                       }`}>
-                        {STATUS_LABEL[vote.status]}
+                        {STATUS_SHORT[vote.status]}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-navy-400">{vote.weight}%</span>
-                      <span className="text-sm font-heading font-semibold text-navy-900 w-8 text-right">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[11px] font-medium text-navy-400 tabular-nums">{vote.weight}%</span>
+                      <span className="text-lg font-heading font-bold text-navy-900 tabular-nums w-10 text-right">
                         {Math.round(vote.score * 100)}
                       </span>
                     </div>
                   </div>
-                  <div className="flex-1 h-2 bg-surface-200 rounded-full overflow-hidden">
+                  <div className="mt-2 h-2 bg-surface-200 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${Math.round(vote.score * 100)}%` }}
@@ -464,50 +496,86 @@ export default function ApplicationDetailPage() {
                       className={`h-full rounded-full ${STATUS_COLOR[vote.status]}`}
                     />
                   </div>
-                  <p className="text-xs text-navy-400 leading-relaxed">{vote.note}</p>
-                  {i < layer4Result.votes.length - 1 && <div className="border-t border-surface-100 mt-1" />}
+                  <p className="text-[11px] sm:text-xs text-navy-500 leading-snug mt-2">{vote.note}</p>
                 </motion.div>
               ))}
             </div>
-            <div className="mt-4 pt-4 border-t border-surface-200 flex items-center justify-between">
-              <span className="text-sm font-medium text-navy-700">Weighted store score</span>
-              <span className="font-heading font-semibold text-navy-900 text-lg">
-                {layer4Result.storeScoreOutOf100} / 100
+            <div className="mt-5 pt-4 border-t-2 border-dashed border-surface-200 flex items-center justify-between gap-3">
+              <span className="text-sm font-bold text-navy-800">Weighted total</span>
+              <span className="font-heading font-bold text-navy-900 text-2xl tabular-nums">
+                {layer4Result.storeScoreOutOf100}<span className="text-base text-navy-400 font-semibold">/100</span>
               </span>
             </div>
           </Section>
         </motion.div>
 
-        {/* ── Vision signals ── */}
+        {/* ── Industry reference imagery (open stock — not applicant photos) ── */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.18 }}>
           <Section>
-            <SectionTitle icon={Eye} title="Visual signals" sub="Detected from store photos" />
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            <SectionHeading
+              accent="blue"
+              title="Industry reference imagery"
+              sub={`Stock photos for “${businessType}” — not this shop.`}
+            />
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
+              {getIndustryReferenceImages(businessType).map((img, i) => (
+                <motion.figure
+                  key={img.src}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: 0.12 + i * 0.05 }}
+                  className="m-0 overflow-hidden rounded-xl border border-surface-200 bg-surface-100 shadow-sm"
+                >
+                  <img
+                    src={img.src}
+                    alt={img.alt}
+                    loading="lazy"
+                    decoding="async"
+                    className="h-32 w-full object-cover sm:h-36"
+                  />
+                  <figcaption className="px-2 py-1.5 text-[10px] leading-snug text-navy-500 line-clamp-2">
+                    {img.alt}
+                  </figcaption>
+                </motion.figure>
+              ))}
+            </div>
+            <p className="text-[10px] text-navy-400 mt-3">
+              <a href="https://www.pexels.com/license/" target="_blank" rel="noopener noreferrer" className="text-navy-600 underline underline-offset-2">Pexels</a> licence · illustrative only
+            </p>
+          </Section>
+        </motion.div>
+
+        {/* ── Vision signals ── */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.22 }}>
+          <Section>
+            <SectionHeading accent="navy" title="Visual signals" sub="From submitted store photos." />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
               {[
                 { label: 'Store tier', value: `Tier ${layer2Result.tierClassification.tier}` },
                 { label: 'Store size', value: `~${layer2Result.storeSizeEstimateSqft} sqft` },
                 { label: 'SKU count', value: `${layer2Result.shelfAnalysis.skuCount} types` },
                 { label: 'Shelf density', value: `${Math.round(layer2Result.shelfAnalysis.shelfDensityIndex * 100)}%` },
               ].map((m) => (
-                <div key={m.label} className="bg-surface-50 border border-surface-200 rounded-lg p-3 text-center">
-                  <p className="text-xs text-navy-400">{m.label}</p>
-                  <p className="font-heading font-semibold text-navy-900 text-sm mt-0.5">{m.value}</p>
+                <div key={m.label} className="bg-gradient-to-b from-surface-50 to-white border border-surface-200 rounded-xl p-3 text-center border-t-2 border-t-navy-700/10">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-navy-400">{m.label}</p>
+                  <p className="font-heading font-bold text-navy-900 text-base mt-1">{m.value}</p>
                 </div>
               ))}
             </div>
             {layer2Result.tierClassification.signals.length > 0 && (
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 {layer2Result.tierClassification.signals.map((s) => (
-                  <div key={s.signal} className="flex items-center gap-3 py-1.5 border-b border-surface-100 last:border-0">
+                  <div key={s.signal} className="flex items-stretch gap-3 rounded-xl bg-surface-50/80 border border-surface-100 px-3 py-2.5">
+                    <div className={`w-1 rounded-full shrink-0 self-stretch min-h-[2.5rem] ${s.confidence >= 0.75 ? 'bg-emerald-500' : 'bg-amber-400'}`} aria-hidden />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-navy-800">{s.signal}</p>
-                      <p className="text-xs text-navy-400 mt-0.5">Proxy: {s.proxy}</p>
+                      <p className="text-xs font-semibold text-navy-900 leading-snug">{s.signal}</p>
+                      <p className="hidden sm:block text-[11px] text-navy-500 mt-1">{s.proxy}</p>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <div className="w-16 h-1 bg-surface-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-navy-600 rounded-full" style={{ width: `${Math.round(s.confidence * 100)}%` }} />
+                    <div className="flex flex-col items-end justify-center shrink-0 gap-1">
+                      <div className="w-20 h-1.5 bg-surface-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-navy-700 rounded-full" style={{ width: `${Math.round(s.confidence * 100)}%` }} />
                       </div>
-                      <span className="text-xs text-navy-500 w-7 text-right">{Math.round(s.confidence * 100)}%</span>
+                      <span className="text-[11px] font-bold text-navy-700 tabular-nums">{Math.round(s.confidence * 100)}%</span>
                     </div>
                   </div>
                 ))}
@@ -517,10 +585,10 @@ export default function ApplicationDetailPage() {
         </motion.div>
 
         {/* ── Geo signals ── */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.22 }}>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.26 }}>
           <Section>
-            <SectionTitle icon={MapPin} title="Geo and location signals" sub="Based on pincode and GPS coordinates" />
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <SectionHeading accent="amber" title="Location & catchment" sub="Pincode model + GPS check." />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
               {[
                 { label: 'Population density', value: `${layer3Result.geoSignals.populationDensityPerSqKm.toLocaleString('en-IN')}/km²` },
                 { label: 'Road type', value: layer3Result.geoSignals.roadType },
@@ -532,38 +600,46 @@ export default function ApplicationDetailPage() {
                 { label: 'Est. daily footfall', value: `${layer3Result.geoSignals.pincodeAvgDailyFootfall.toLocaleString('en-IN')}` },
                 { label: 'Rent/revenue ratio', value: `${Math.round(layer3Result.rentOwnership.rentToRevenueRatio * 100)}%` },
               ].map((m) => (
-                <div key={m.label} className="bg-surface-50 border border-surface-200 rounded-lg p-3">
-                  <p className="text-xs text-navy-400">{m.label}</p>
-                  <p className="font-heading font-semibold text-navy-900 text-sm mt-0.5 capitalize">{m.value}</p>
+                <div key={m.label} className="rounded-xl border border-surface-200 bg-white p-3 border-l-4 border-l-amber-400/40">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-navy-400 leading-tight">{m.label}</p>
+                  <p className="font-heading font-bold text-navy-900 text-sm mt-1 capitalize tabular-nums">{m.value}</p>
                 </div>
               ))}
             </div>
-            <div className="mt-3 flex items-center gap-3 bg-surface-50 border border-surface-200 rounded-lg px-4 py-3">
-              <div>
-                <p className="text-xs text-navy-400">GPS consistency</p>
-                <p className="text-sm font-medium text-navy-900 mt-0.5">
-                  {layer3Result.gpsConsistency.flagged
-                    ? `⚠ Mismatch — max deviation ${layer3Result.gpsConsistency.maxDeviationMetres}m`
-                    : `✓ Verified — within ${layer3Result.gpsConsistency.maxDeviationMetres}m`}
-                </p>
-                <p className="text-xs text-navy-400 mt-0.5">{layer3Result.gpsConsistency.note}</p>
-              </div>
+            <div
+              className={`mt-4 rounded-xl border px-4 py-3 sm:px-5 sm:py-4 border-l-4 ${
+                layer3Result.gpsConsistency.flagged
+                  ? 'border-amber-200 bg-amber-50/80 border-l-amber-500'
+                  : 'border-emerald-200 bg-emerald-50/60 border-l-emerald-600'
+              }`}
+            >
+              <p className="text-[10px] font-bold uppercase tracking-wide text-navy-500">GPS</p>
+              <p className="text-sm font-bold text-navy-900 mt-1">
+                {layer3Result.gpsConsistency.flagged ? 'Mismatch' : 'Aligned'}
+                <span className="font-mono font-semibold text-navy-700"> · ±{layer3Result.gpsConsistency.maxDeviationMetres}m</span>
+              </p>
+              <p className="text-xs text-navy-600 mt-1.5 leading-snug">{layer3Result.gpsConsistency.note}</p>
             </div>
           </Section>
         </motion.div>
 
         {/* ── Explainability ── */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.26 }}>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.3 }}>
           <Section>
-            <SectionTitle icon={BarChart3} title="Explainability — appraiser flags" />
-            <div className="grid grid-cols-1 gap-2">
+            <SectionHeading accent="navy" title="Appraiser flags" sub="Quick read on strengths and watch-outs." />
+            <div className="grid grid-cols-1 gap-2 sm:gap-2.5">
               {buildExplainabilityFlags(layer2Result, layer3Result, layer4Result).map((flag) => (
-                <div key={flag.text} className="flex items-start gap-2">
-                  {flag.type === 'positive'
-                    ? <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-                    : <AlertTriangle size={13} className="text-amber-500 flex-shrink-0 mt-0.5" />
-                  }
-                  <span className="text-xs text-navy-600 leading-relaxed">{flag.text}</span>
+                <div
+                  key={flag.text}
+                  className="flex gap-3 rounded-xl border border-surface-100 bg-surface-50/60 px-3 py-2.5 sm:px-4"
+                >
+                  <div
+                    className={`w-1 rounded-full shrink-0 self-stretch min-h-[2.75rem] ${
+                      flag.type === 'positive' ? 'bg-emerald-500' : 'bg-amber-500'
+                    }`}
+                    aria-hidden
+                  />
+                  <p className="text-xs sm:text-sm text-navy-700 leading-snug pt-0.5">{flag.text}</p>
                 </div>
               ))}
             </div>
@@ -571,13 +647,14 @@ export default function ApplicationDetailPage() {
         </motion.div>
 
         {/* Back */}
-        <div className="flex justify-start">
+        <div className="flex justify-stretch sm:justify-start">
           <button
+            type="button"
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-surface-200 bg-white text-sm text-navy-600 hover:bg-surface-50 transition-colors"
+            className="w-full sm:w-auto min-h-[48px] inline-flex items-center justify-center gap-2 px-5 rounded-xl border-2 border-surface-200 bg-white text-sm font-semibold text-navy-800 hover:bg-surface-50 active:scale-[0.99] transition-transform"
           >
-            <ArrowLeft size={14} />
-            Back to all applications
+            <ArrowLeft size={16} className="shrink-0" />
+            All applications
           </button>
         </div>
 

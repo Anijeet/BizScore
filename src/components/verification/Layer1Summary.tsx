@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ShieldCheck, ShieldAlert, ShieldX, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import type { Layer1Result } from '@/types'
 
@@ -13,38 +13,33 @@ export function Layer1Summary({ result, onProceed }: Layer1SummaryProps) {
 
   const config = {
     proceed: {
-      icon: ShieldCheck,
-      iconColor: 'text-emerald-500',
+      dotClass: 'bg-emerald-500',
+      barClass: 'border-l-emerald-600',
       bg: 'bg-emerald-50',
       border: 'border-emerald-200',
-      label: 'Checks completed',
-      description:
-        'Your business details have been received. You can continue to the photo step. Final scores and loan amounts are not shown here — only a Poonawalla officer sees them after you submit your full application.',
-      badgeColor: 'text-emerald-700',
+      label: 'Checks complete',
+      description: 'You can go on to the photo step. Scores stay with the bank officer after full submit.',
+      badgeColor: 'text-emerald-800',
     },
     review: {
-      icon: ShieldAlert,
-      iconColor: 'text-amber-500',
+      dotClass: 'bg-amber-500',
+      barClass: 'border-l-amber-500',
       bg: 'bg-amber-50',
       border: 'border-amber-200',
-      label: 'Some checks need review',
-      description:
-        'We received your details, but a few items may need a closer look by the bank team. You may still continue; an officer will decide after you submit.',
-      badgeColor: 'text-amber-700',
+      label: 'Needs a closer look',
+      description: 'You can still continue — an officer will review everything.',
+      badgeColor: 'text-amber-900',
     },
     reject: {
-      icon: ShieldX,
-      iconColor: 'text-red-500',
+      dotClass: 'bg-red-500',
+      barClass: 'border-l-red-500',
       bg: 'bg-red-50',
       border: 'border-red-200',
       label: 'Could not verify online',
-      description:
-        'We could not match your details with our online checks. Please check your information or visit a branch for help before continuing.',
-      badgeColor: 'text-red-700',
+      description: 'Double-check your details or visit a branch for help.',
+      badgeColor: 'text-red-800',
     },
   }[recommendation]
-
-  const Icon = config.icon
 
   return (
     <motion.div
@@ -53,36 +48,26 @@ export function Layer1Summary({ result, onProceed }: Layer1SummaryProps) {
       transition={{ duration: 0.4 }}
       className="flex flex-col gap-4"
     >
-      <div className={`rounded-lg p-5 border ${config.bg} ${config.border}`}>
-        <div className="flex items-start gap-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${config.bg} border ${config.border}`}>
-            <Icon size={20} className={config.iconColor} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className={`font-heading font-semibold text-sm ${config.badgeColor}`}>
-                {config.label}
-              </span>
-            </div>
-            <p className="text-sm text-navy-700 mt-2 leading-relaxed">
-              {config.description}
-            </p>
+      <div className={`rounded-2xl p-4 sm:p-5 border ${config.bg} ${config.border} border-l-4 ${config.barClass}`}>
+        <div className="flex gap-3">
+          <span className={`mt-1.5 h-2.5 w-2.5 rounded-full shrink-0 ${config.dotClass}`} aria-hidden />
+          <div className="min-w-0 flex-1">
+            <p className={`font-heading font-bold text-sm sm:text-base ${config.badgeColor}`}>{config.label}</p>
+            <p className="text-sm text-navy-700 mt-1.5 leading-snug">{config.description}</p>
           </div>
         </div>
       </div>
 
       {recommendation !== 'reject' && (
-        <div className="flex justify-end">
-          <Button onClick={onProceed} size="md">
-            Continue to photo step
-            <ArrowRight size={15} />
-          </Button>
-        </div>
+        <Button onClick={onProceed} size="md" className="min-h-[48px] w-full sm:w-auto sm:self-end justify-center">
+          Continue to photos
+          <ArrowRight size={15} />
+        </Button>
       )}
 
       {recommendation === 'reject' && (
-        <p className="text-xs text-red-600 text-center">
-          This application cannot proceed automatically. Please correct your details or visit a branch.
+        <p className="text-xs text-red-700 text-center font-medium rounded-lg bg-red-50 border border-red-100 px-3 py-2">
+          Fix your details or visit a branch to continue.
         </p>
       )}
     </motion.div>

@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
-import { ArrowRight, CheckCircle2, TrendingUp, MapPin, Shield, Camera } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 // ─── Unsplash image URLs ──────────────────────────────────────────────────────
@@ -49,36 +49,33 @@ const BUSINESS_TYPES = [
 ]
 
 const STATS = [
-  { value: '13M+', label: 'Businesses without formal credit records' },
-  { value: '30s', label: 'End-to-end scoring latency' },
-  { value: '85%+', label: 'Tier detection accuracy target' },
-  { value: '₹0', label: 'Field visit cost for pre-qualification' },
+  { value: '13M+', label: 'Shops thin on credit history' },
+  { value: '30s', label: 'Typical run time' },
+  { value: '85%+', label: 'Tier detection goal' },
+  { value: '₹0', label: 'Pre-check visit cost' },
 ]
 
 const HOW_STEPS = [
   {
     number: '01',
-    title: 'Enter your shop details',
-    description:
-      'Enter your mobile number to verify your identity, fill in your shop name and address, then take 3–5 photos of your shop from your phone. This takes less than 2 minutes.',
+    title: 'Verify & tell us about the shop',
+    description: 'Mobile OTP, shop name and address, then 5 quick camera photos — usually under 2 minutes.',
     img: 'https://images.unsplash.com/photo-1512428559087-560fa5ceab42?w=700&q=80',
-    tags: ['Mobile verification', 'Business identity check', 'GST lookup (optional)'],
+    tags: ['OTP', 'Identity', 'GST optional'],
   },
   {
     number: '02',
-    title: 'We check your shop',
-    description:
-      'Our system scans your shop photos to understand what you sell and how much stock you have. It also checks your location to see how busy the area is.',
+    title: 'We analyse photos & area',
+    description: 'Shelf signals and your pincode help estimate demand — you stay on one simple flow.',
     img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=700&q=80',
-    tags: ['Photo analysis', 'Location check', 'Stock assessment'],
+    tags: ['Vision', 'Location', 'Stock cues'],
   },
   {
     number: '03',
-    title: 'Get your score report',
-    description:
-      'See your business score with estimated daily sales, monthly income range, and any risk factors — explained in simple language, no confusing numbers.',
+    title: 'You get a clear report',
+    description: 'Sales range and flags in plain language — no spreadsheet jargon.',
     img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=700&q=80',
-    tags: ['Daily sales estimate', 'Monthly income range', 'Risk indicators'],
+    tags: ['Daily sales band', 'Income range', 'Risks'],
   },
 ]
 
@@ -199,8 +196,8 @@ function BusinessCard({ label, tags, img }: { label: string; tags: string[]; img
       <div className="p-3 flex flex-col gap-1.5">
         {tags.map((tag) => (
           <div key={tag} className="flex items-center gap-1.5">
-            <CheckCircle2 size={11} className="text-emerald-500 flex-shrink-0" />
-            <span className="text-xs text-navy-500">{tag}</span>
+            <span className="text-emerald-600 text-xs" aria-hidden>·</span>
+            <span className="text-xs text-navy-600 font-medium">{tag}</span>
           </div>
         ))}
       </div>
@@ -245,7 +242,7 @@ function FeatureSection({ step, reverse = false }: { step: typeof HOW_STEPS[0]; 
           <h3 className="font-heading font-semibold text-2xl text-navy-900 leading-tight">
             {step.title}
           </h3>
-          <p className="text-navy-500 mt-3 text-sm leading-relaxed">{step.description}</p>
+          <p className="text-navy-600 mt-2 text-sm leading-snug">{step.description}</p>
         </div>
       </div>
     </motion.div>
@@ -260,42 +257,39 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="bg-navy-900 border-b border-navy-800 overflow-hidden">
-        <div className="container-page py-16 lg:py-24">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+        <div className="container-page py-12 sm:py-16 lg:py-20">
+          <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
             <motion.div
               initial={{ opacity: 0, x: -24 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
               className="flex-1 max-w-lg"
             >
-              <span className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 mb-6">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                Demo version — sample data only
-              </span>
-              <h1 className="font-heading font-semibold text-3xl lg:text-5xl text-white leading-tight">
+              <div className="flex flex-wrap gap-2 mb-5">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500/25 text-amber-200 border border-amber-400/30">Demo</span>
+                <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-white/10 text-navy-100 border border-white/15">Sample data</span>
+              </div>
+              <h1 className="font-heading font-semibold text-3xl sm:text-4xl lg:text-5xl text-white leading-[1.1]">
                 Score your shop
                 <br />
-                <span className="text-amber-400">in under a minute.</span>
+                <span className="text-amber-400">in about a minute.</span>
               </h1>
-              <p className="mt-4 text-navy-300 text-sm lg:text-base leading-relaxed">
-                Take 5 photos of your shop and fill in basic details.
-                We check your business and give you an instant score.
-                No GST documents, no bank statements, no agent visits.
+              <p className="mt-3 text-navy-200 text-sm sm:text-base leading-snug max-w-md">
+                Five photos + basics. No bank statements or branch visit for this step.
               </p>
-              <div className="mt-6 flex gap-3">
+              <div className="mt-6">
                 <Link to="/assess">
-                  <Button size="lg">
-                    Start free assessment
+                  <Button size="lg" className="min-h-[48px] w-full sm:w-auto justify-center">
+                    Start assessment
                     <ArrowRight size={16} />
                   </Button>
                 </Link>
               </div>
-              <div className="mt-6 flex flex-col sm:flex-row flex-wrap gap-3">
-                {['Checks what you sell', 'Checks your area and location', 'Quick and secure'].map((s) => (
-                  <div key={s} className="flex items-center gap-1.5">
-                    <CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" />
-                    <span className="text-xs text-navy-400">{s}</span>
-                  </div>
+              <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2">
+                {['Shelf & stock signals', 'Area footfall proxy', 'Phone-only flow'].map((s) => (
+                  <span key={s} className="text-xs text-navy-300 border-l-2 border-emerald-400/60 pl-2">
+                    {s}
+                  </span>
                 ))}
               </div>
             </motion.div>
@@ -314,18 +308,18 @@ export default function HomePage() {
 
       {/* Stats */}
       <section className="border-b border-surface-200 bg-white">
-        <div className="container-page py-10">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="container-page py-8 sm:py-10">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {STATS.map((s, i) => (
               <motion.div
                 key={s.value}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: i * 0.07 }}
-                className="flex flex-col gap-1 text-center"
+                className="flex flex-col gap-1 text-center rounded-xl border border-surface-200 border-t-4 border-t-navy-800/80 bg-surface-50/50 py-4 px-2"
               >
-                <span className="font-heading font-semibold text-3xl text-navy-900">{s.value}</span>
-                <span className="text-xs text-navy-400 leading-relaxed">{s.label}</span>
+                <span className="font-heading font-bold text-2xl sm:text-3xl text-navy-900 tabular-nums">{s.value}</span>
+                <span className="text-[11px] sm:text-xs text-navy-600 font-medium leading-snug px-1">{s.label}</span>
               </motion.div>
             ))}
           </div>
@@ -333,16 +327,17 @@ export default function HomePage() {
       </section>
 
       {/* Business type carousel */}
-      <section className="border-b border-surface-200 bg-surface-50 py-14">
-        <div className="container-page mb-8">
-          <p className="text-label mb-2">Works for all shop types</p>
-          <h2 className="font-heading font-semibold text-2xl text-navy-900">
-            Any shop, any city, any size.
-          </h2>
-          <p className="text-navy-500 text-sm mt-2">
-            Whether you run a kirana store, a salon, or a pharmacy — BizScore works the same
-            way for all of them.
-          </p>
+      <section className="border-b border-surface-200 bg-surface-50 py-10 sm:py-12">
+        <div className="container-page mb-6 sm:mb-8">
+          <div className="border-l-4 border-navy-800 pl-3 sm:pl-4 max-w-xl">
+            <p className="text-label mb-1">Shop types</p>
+            <h2 className="font-heading font-semibold text-xl sm:text-2xl text-navy-900 leading-tight">
+              Kirana, salon, pharmacy, and more
+            </h2>
+            <p className="text-navy-600 text-sm mt-1.5 leading-snug">
+              Same flow — signals change with what you sell.
+            </p>
+          </div>
         </div>
 
         {/* Scrolling carousel */}
@@ -359,14 +354,14 @@ export default function HomePage() {
 
       {/* How it works */}
       <section className="border-b border-surface-200 bg-white">
-        <div className="container-page py-16 lg:py-20 flex flex-col gap-16">
-          <div>
-            <p className="text-label mb-2">How it works</p>
-            <h2 className="font-heading font-semibold text-2xl text-navy-900">
-              3 simple steps to your shop score.
+        <div className="container-page py-12 sm:py-16 lg:py-20 flex flex-col gap-12 sm:gap-14">
+          <div className="border-l-4 border-emerald-600 pl-3 sm:pl-4 max-w-xl">
+            <p className="text-label mb-1">How it works</p>
+            <h2 className="font-heading font-semibold text-xl sm:text-2xl text-navy-900 leading-tight">
+              Three steps on your phone
             </h2>
-            <p className="text-navy-500 text-sm mt-2">
-              No paperwork. No appointments. Just your phone and your shop.
+            <p className="text-navy-600 text-sm mt-1.5 leading-snug">
+              No paperwork queue — you stay in the browser.
             </p>
           </div>
           {HOW_STEPS.map((step, i) => (
@@ -377,37 +372,30 @@ export default function HomePage() {
 
       {/* What you get */}
       <section className="border-b border-surface-200 bg-surface-50">
-        <div className="container-page py-16">
-          <div className="flex flex-col lg:flex-row gap-12 items-start">
+        <div className="container-page py-12 sm:py-16">
+          <div className="flex flex-col lg:flex-row gap-10 lg:gap-12 items-start">
             <div className="flex-1 max-w-md">
-              <p className="text-label mb-3">What you get</p>
-              <h2 className="font-heading font-semibold text-2xl text-navy-900 leading-tight">
-                A clear report, not just a number.
-              </h2>
-              <p className="text-navy-500 text-sm mt-4 leading-relaxed">
-                Your score report explains everything in plain language — what we checked,
-                what we found, and what it means for your business.
-              </p>
-              <div className="mt-8 flex flex-col gap-5">
+              <div className="border-l-4 border-navy-800 pl-3 sm:pl-4">
+                <p className="text-label mb-1">What you get</p>
+                <h2 className="font-heading font-semibold text-xl sm:text-2xl text-navy-900 leading-tight">
+                  Plain-language report
+                </h2>
+                <p className="text-navy-600 text-sm mt-2 leading-snug">
+                  Ranges and flags instead of dense tables.
+                </p>
+              </div>
+              <div className="mt-6 flex flex-col gap-3">
                 {[
-                  { icon: TrendingUp, title: 'Estimated daily and monthly sales', sub: 'See how much your shop likely earns per day and per month, shown as a range.' },
-                  { icon: Shield, title: 'Identity and fraud checks', sub: 'We verify that your business is real and the photos are from your actual shop.' },
-                  { icon: MapPin, title: 'Location and area report', sub: 'Understand how busy your area is, how many competitors are nearby, and your road visibility.' },
-                  { icon: Camera, title: 'Shop photo analysis', sub: 'We scan your shelves to count products, estimate stock value, and check shop quality.' },
-                ].map((item) => {
-                  const Icon = item.icon
-                  return (
-                    <div key={item.title} className="flex gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-navy-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Icon size={15} className="text-navy-700" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-navy-900">{item.title}</p>
-                        <p className="text-xs text-navy-500 mt-0.5 leading-relaxed">{item.sub}</p>
-                      </div>
-                    </div>
-                  )
-                })}
+                  { title: 'Sales bands', sub: 'Typical day and month ranges for your tier.' },
+                  { title: 'Trust checks', sub: 'Business listing + optional GST + photo match.' },
+                  { title: 'Catchment read', sub: 'Footfall proxy, competitors, road type.' },
+                  { title: 'Shelf read', sub: 'Density, SKU mix, stock feel from photos.' },
+                ].map((item) => (
+                  <div key={item.title} className="rounded-xl border border-surface-200 bg-white px-4 py-3 border-l-4 border-l-emerald-500/70">
+                    <p className="text-sm font-bold text-navy-900">{item.title}</p>
+                    <p className="text-xs text-navy-600 mt-0.5 leading-snug">{item.sub}</p>
+                  </div>
+                ))}
               </div>
             </div>
             <div className="flex-1 w-full">
@@ -419,17 +407,16 @@ export default function HomePage() {
 
       {/* CTA */}
       <section className="bg-navy-900">
-        <div className="container-page py-14">
-          <div className="max-w-xl mx-auto text-center flex flex-col items-center gap-5">
-            <h2 className="font-heading font-semibold text-2xl lg:text-3xl text-white leading-tight">
-              Check your shop score — it's free.
+        <div className="container-page py-12 sm:py-14">
+          <div className="max-w-lg mx-auto text-center flex flex-col items-center gap-4 px-2">
+            <h2 className="font-heading font-semibold text-2xl sm:text-3xl text-white leading-tight">
+              Ready when you are
             </h2>
-            <p className="text-navy-300 text-sm leading-relaxed">
-              No documents needed. Just your phone, 5 photos of your shop, and your address.
-              Takes less than 2 minutes.
+            <p className="text-navy-200 text-sm leading-snug">
+              Phone + address + five photos. Roughly two minutes.
             </p>
-            <Link to="/assess">
-              <Button size="lg">
+            <Link to="/assess" className="w-full sm:w-auto">
+              <Button size="lg" className="min-h-[48px] w-full sm:w-auto justify-center">
                 Start assessment
                 <ArrowRight size={16} />
               </Button>
@@ -440,17 +427,15 @@ export default function HomePage() {
 
       {/* Disclaimer */}
       <section className="bg-amber-50 border-t border-amber-200">
-        <div className="container-page py-5">
-          <div className="flex items-start gap-3 max-w-3xl">
-            <span className="text-amber-500 text-base flex-shrink-0 mt-0.5">⚠</span>
-            <div>
-              <p className="text-xs font-semibold text-amber-800 mb-1">Demo version — mock data only</p>
-              <p className="text-xs text-amber-700 leading-relaxed">
-                This is a demo version of BizScore. All scores and results shown are sample data and not real assessments. This tool is not a credit decision —
-                all final loan approvals remain with the authorised financial institution.
-              </p>
-            </div>
+        <div className="container-page py-4 sm:py-5">
+          <div className="max-w-3xl flex flex-wrap gap-2 mb-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-200/90 text-amber-950">Demo</span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white/80 border border-amber-100 text-amber-950">Mock scores</span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white/80 border border-amber-100 text-amber-950">Not a credit decision</span>
           </div>
+          <p className="text-xs text-amber-900/90 leading-snug max-w-3xl">
+            Lenders make the final call — this flow is for demonstration only.
+          </p>
         </div>
       </section>
     </div>
