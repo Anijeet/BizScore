@@ -87,14 +87,16 @@ function MockScoreCard() {
       <div className="absolute inset-0 rounded-2xl bg-navy-600/20 blur-2xl scale-105" />
       <div className="relative bg-white rounded-2xl border border-surface-200 shadow-2xl overflow-hidden">
         {/* Titlebar */}
-        <div className="bg-navy-900 px-5 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="bg-navy-900 px-3 sm:px-5 py-3 flex items-center justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
             <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
           </div>
-          <span className="text-xs text-navy-300 font-mono">bizscope — assessment result</span>
-          <div className="w-16" />
+          <span className="text-[10px] sm:text-xs text-navy-300 font-mono truncate min-w-0 text-center">
+            bizscope — result
+          </span>
+          <div className="w-10 sm:w-16 flex-shrink-0" aria-hidden />
         </div>
 
         <div className="p-5 flex flex-col gap-4">
@@ -219,11 +221,11 @@ function FeatureSection({ step, reverse = false }: { step: typeof HOW_STEPS[0]; 
       transition={{ duration: 0.5 }}
       className={`flex flex-col ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'} gap-10 items-center`}
     >
-      <div className="flex-1 w-full">
-        <div className="relative rounded-2xl overflow-hidden aspect-[4/3]">
+      <div className="flex-1 w-full min-w-0">
+        <div className="relative rounded-2xl overflow-hidden aspect-[4/3] max-w-full">
           <img src={step.img} alt={step.title} className="w-full h-full object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-navy-900/40" />
-          <span className="absolute top-4 left-4 font-heading font-semibold text-7xl text-white/15 leading-none select-none">
+          <span className="absolute top-3 left-3 sm:top-4 sm:left-4 font-heading font-semibold text-5xl sm:text-6xl lg:text-7xl text-white/15 leading-none select-none pointer-events-none">
             {step.number}
           </span>
           <div className="absolute bottom-4 left-4 flex gap-1.5 flex-wrap">
@@ -253,7 +255,7 @@ function FeatureSection({ step, reverse = false }: { step: typeof HOW_STEPS[0]; 
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col w-full min-w-0 overflow-x-hidden">
 
       {/* Hero */}
       <section className="bg-navy-900 border-b border-navy-800 overflow-hidden">
@@ -326,8 +328,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Business type carousel */}
-      <section className="border-b border-surface-200 bg-surface-50 py-10 sm:py-12">
+      {/* Business type carousel — clip animated row so it never widens the page */}
+      <section className="border-b border-surface-200 bg-surface-50 py-10 sm:py-12 w-full max-w-full overflow-x-hidden">
         <div className="container-page mb-6 sm:mb-8">
           <div className="border-l-4 border-navy-800 pl-3 sm:pl-4 max-w-xl">
             <p className="text-label mb-1">Shop types</p>
@@ -341,7 +343,7 @@ export default function HomePage() {
         </div>
 
         {/* Scrolling carousel */}
-        <div className="overflow-hidden relative">
+        <div className="w-full max-w-full overflow-hidden relative">
           <div className="absolute left-0 top-0 bottom-0 w-20 z-10 bg-gradient-to-r from-surface-50 to-transparent pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-20 z-10 bg-gradient-to-l from-surface-50 to-transparent pointer-events-none" />
           <div className="flex gap-4 px-4" style={{ animation: 'marquee 30s linear infinite', width: 'max-content' }}>

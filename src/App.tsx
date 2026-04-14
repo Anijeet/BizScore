@@ -35,9 +35,9 @@ function RedirectIfLoggedIn({ children }: { children: React.ReactNode }) {
 
 function BusinessLayout() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col min-w-0 overflow-x-hidden">
       <Header />
-      <main className="flex-1">
+      <main className="flex-1 min-w-0 overflow-x-hidden">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/docs" element={<DocsPage />} />

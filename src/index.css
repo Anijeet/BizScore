@@ -23,6 +23,7 @@
     @apply font-body text-navy-900 bg-white;
     font-size: 15px;
     line-height: 1.6;
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -38,7 +39,7 @@
 @layer components {
   /* Reusable section container */
   .container-page {
-    @apply max-w-6xl mx-auto px-6;
+    @apply max-w-6xl mx-auto w-full min-w-0 px-4 sm:px-6;
   }
 
   /* Divider line matching Poonawalla's subtle separators */
