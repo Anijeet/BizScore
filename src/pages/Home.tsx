@@ -4,52 +4,52 @@ import { motion, useInView } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
-// ─── Unsplash image URLs ──────────────────────────────────────────────────────
-const BUSINESS_TYPES = [
+// ─── Kirana-only carousel (grocery / neighbourhood store imagery) ───────────
+const KIRANA_SCENES = [
   {
-    label: 'Kirana stores',
-    tags: ['Shelf scanning', 'SKU detection', 'Working capital'],
+    label: 'Main aisle',
+    tags: ['Staples & packs', 'Shelf height', 'Working-capital signal'],
     img: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&q=80',
   },
   {
-    label: 'Pharmacies',
-    tags: ['Inventory check', 'Product match', 'Location score'],
-    img: 'https://images.unsplash.com/photo-1576671081837-49000212a370?w=600&q=80',
+    label: 'Fresh & produce',
+    tags: ['Fruit & veg', 'Daily turnover cue', 'Footfall proxy'],
+    img: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&q=80',
   },
   {
-    label: 'Salons',
-    tags: ['Business identity', 'Geo analysis', 'Cash flow estimate'],
-    img: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&q=80',
+    label: 'FMCG wall',
+    tags: ['Tea & biscuits', 'Brand mix', 'Stock depth'],
+    img: 'https://images.unsplash.com/photo-1579113800032-c38bd7635818?w=600&q=80',
   },
   {
-    label: 'Restaurants',
-    tags: ['Footfall proxy', 'Competitor density', 'Road type score'],
-    img: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&q=80',
+    label: 'Store interior',
+    tags: ['Layout & lighting', 'Kirana footprint', 'Tier read'],
+    img: 'https://images.unsplash.com/photo-1591768793355-74d04bb6608f?w=600&q=80',
   },
   {
-    label: 'Hardware stores',
-    tags: ['Inventory value', 'SKU diversity', 'Area affluence'],
-    img: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=600&q=80',
+    label: 'Packaged goods',
+    tags: ['Impulse SKUs', 'Pack density', 'Margin mix'],
+    img: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=600&q=80',
   },
   {
-    label: 'Clinics',
-    tags: ['Business check', 'GST verify', 'Demand score'],
-    img: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&q=80',
+    label: 'Cold drinks',
+    tags: ['Visi-cooler cue', 'Chilled stock', 'Summer demand'],
+    img: 'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?w=600&q=80',
   },
   {
-    label: 'Clothing shops',
-    tags: ['Product existence', 'Location tier', 'Revenue range'],
-    img: 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=600&q=80',
+    label: 'Household & daily',
+    tags: ['Repeat basket', 'Neighbourhood trust', 'Stock feel'],
+    img: 'https://images.unsplash.com/photo-1506617420156-8e4536971650?w=600&q=80',
   },
   {
-    label: 'Electronics',
-    tags: ['Shelf density', 'Population density', 'Confidence score'],
-    img: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=600&q=80',
+    label: 'Counter & display',
+    tags: ['Quick picks', 'Cash + digital pay', 'Shop rhythm'],
+    img: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=600&q=80',
   },
 ]
 
 const STATS = [
-  { value: '13M+', label: 'Shops thin on credit history' },
+  { value: '13M+', label: 'Kirana & small shops thin on formal credit' },
   { value: '30s', label: 'Typical run time' },
   { value: '85%+', label: 'Tier detection goal' },
   { value: '₹0', label: 'Pre-check visit cost' },
@@ -58,22 +58,24 @@ const STATS = [
 const HOW_STEPS = [
   {
     number: '01',
-    title: 'Verify & tell us about the shop',
-    description: 'Mobile OTP, shop name and address, then 5 quick camera photos — usually under 2 minutes.',
-    img: 'https://images.unsplash.com/photo-1512428559087-560fa5ceab42?w=700&q=80',
-    tags: ['OTP', 'Identity', 'GST optional'],
+    title: 'Verify your kirana',
+    description:
+      'OTP, shop name, GPS-friendly address, then five guided photos — storefront, three shelf angles, and the lane outside. Usually under two minutes.',
+    img: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=700&q=80',
+    tags: ['OTP', 'Kirana address', 'GST optional'],
   },
   {
     number: '02',
-    title: 'We analyse photos & area',
-    description: 'Shelf signals and your pincode help estimate demand — you stay on one simple flow.',
-    img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=700&q=80',
-    tags: ['Vision', 'Location', 'Stock cues'],
+    title: 'We read shelf & catchment',
+    description:
+      'Staples, FMCG, cooler, and counter cues from your photos — plus pincode-level demand hints for a neighbourhood kirana.',
+    img: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=700&q=80',
+    tags: ['Shelf mix', 'PIN + area', 'Stock feel'],
   },
   {
     number: '03',
-    title: 'You get a clear report',
-    description: 'Sales range and flags in plain language — no spreadsheet jargon.',
+    title: 'Plain-language scorecard',
+    description: 'Typical day / month sales bands and flags — written for shop owners, not credit analysts.',
     img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=700&q=80',
     tags: ['Daily sales band', 'Income range', 'Risks'],
   },
@@ -104,9 +106,9 @@ function MockScoreCard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="font-heading font-semibold text-navy-900 text-sm">
-                Sharma General Store
+                Sharma Kirana
               </p>
-              <p className="text-xs text-navy-400">Kirana · Malviya Nagar, Delhi</p>
+              <p className="text-xs text-navy-400">Neighbourhood grocery · Malviya Nagar, Delhi</p>
             </div>
             <span className="text-xs font-medium px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
               Pre-approve
@@ -164,9 +166,9 @@ function MockScoreCard() {
           {/* Flags */}
           <div className="flex gap-1.5 flex-wrap">
             {[
-              { text: 'High footfall area', style: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-              { text: 'Standard configuration', style: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-              { text: '3 competitors nearby', style: 'bg-amber-50 text-amber-700 border-amber-200' },
+              { text: 'Strong staple stack', style: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+              { text: 'FMCG + biscuits mix', style: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+              { text: '2 kirana rivals 200m', style: 'bg-amber-50 text-amber-700 border-amber-200' },
             ].map((f) => (
               <span key={f.text} className={`text-xs px-2 py-0.5 rounded border ${f.style}`}>
                 {f.text}
@@ -272,12 +274,12 @@ export default function HomePage() {
                 <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-white/10 text-navy-100 border border-white/15">Sample data</span>
               </div>
               <h1 className="font-heading font-semibold text-3xl sm:text-4xl lg:text-5xl text-white leading-[1.1]">
-                Score your shop
+                Built for your kirana
                 <br />
-                <span className="text-amber-400">in about a minute.</span>
+                <span className="text-amber-400">Score it in about a minute.</span>
               </h1>
               <p className="mt-3 text-navy-200 text-sm sm:text-base leading-snug max-w-md">
-                Five photos + basics. No bank statements or branch visit for this step.
+                Neighbourhood grocery: five quick photos (storefront, three shelf views, lane outside) plus basics — no bank statements for this step.
               </p>
               <div className="mt-6">
                 <Link to="/assess">
@@ -288,7 +290,7 @@ export default function HomePage() {
                 </Link>
               </div>
               <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2">
-                {['Shelf & stock signals', 'Area footfall proxy', 'Phone-only flow'].map((s) => (
+                {['Dal / atta / FMCG shelves', 'PIN + lane outside', 'Phone-only flow'].map((s) => (
                   <span key={s} className="text-xs text-navy-300 border-l-2 border-emerald-400/60 pl-2">
                     {s}
                   </span>
@@ -304,6 +306,28 @@ export default function HomePage() {
             >
               <MockScoreCard />
             </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Kirana focus strip */}
+      <section className="border-b border-surface-200 bg-navy-50">
+        <div className="container-page py-6 sm:py-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="border-l-4 border-amber-500 pl-3 min-w-0">
+              <p className="text-label text-navy-600 mb-1">Kirana-first</p>
+              <h2 className="font-heading font-semibold text-lg sm:text-xl text-navy-900 leading-tight">
+                Signals tuned for neighbourhood grocery
+              </h2>
+              <p className="text-navy-600 text-sm mt-1.5 leading-snug max-w-xl">
+                We care about shelf height, staple packs, cooler presence, and how busy the lane feels — the same cues a field officer notices on a kirana visit.
+              </p>
+            </div>
+            <ul className="flex flex-col gap-2 text-sm text-navy-700 shrink-0 sm:text-right sm:min-w-[200px]">
+              <li className="font-medium">Atta · dal · oil · masala</li>
+              <li className="font-medium">Biscuits · namkeen · tea</li>
+              <li className="font-medium">Cold drinks & counter rhythm</li>
+            </ul>
           </div>
         </div>
       </section>
@@ -332,12 +356,12 @@ export default function HomePage() {
       <section className="border-b border-surface-200 bg-surface-50 py-10 sm:py-12 w-full max-w-full overflow-x-hidden">
         <div className="container-page mb-6 sm:mb-8">
           <div className="border-l-4 border-navy-800 pl-3 sm:pl-4 max-w-xl">
-            <p className="text-label mb-1">Shop types</p>
+            <p className="text-label mb-1">Inside a kirana</p>
             <h2 className="font-heading font-semibold text-xl sm:text-2xl text-navy-900 leading-tight">
-              Kirana, salon, pharmacy, and more
+              Real grocery aisles, one use case
             </h2>
             <p className="text-navy-600 text-sm mt-1.5 leading-snug">
-              Same flow — signals change with what you sell.
+              Scrolling scenes below are all kirana / neighbourhood grocery — how we think about your shelves and counter.
             </p>
           </div>
         </div>
@@ -347,7 +371,7 @@ export default function HomePage() {
           <div className="absolute left-0 top-0 bottom-0 w-20 z-10 bg-gradient-to-r from-surface-50 to-transparent pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-20 z-10 bg-gradient-to-l from-surface-50 to-transparent pointer-events-none" />
           <div className="flex gap-4 px-4" style={{ animation: 'marquee 30s linear infinite', width: 'max-content' }}>
-            {[...BUSINESS_TYPES, ...BUSINESS_TYPES].map((b, i) => (
+            {[...KIRANA_SCENES, ...KIRANA_SCENES].map((b, i) => (
               <BusinessCard key={`${b.label}-${i}`} {...b} />
             ))}
           </div>
@@ -415,7 +439,7 @@ export default function HomePage() {
               Ready when you are
             </h2>
             <p className="text-navy-200 text-sm leading-snug">
-              Phone + address + five photos. Roughly two minutes.
+              Phone + shop location + five kirana photos (three product views). Roughly two minutes.
             </p>
             <Link to="/assess" className="w-full sm:w-auto">
               <Button size="lg" className="min-h-[48px] w-full sm:w-auto justify-center">

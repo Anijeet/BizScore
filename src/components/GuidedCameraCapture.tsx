@@ -5,7 +5,6 @@ import {
   Store,
   Package,
   MapPin,
-  QrCode,
   X,
   AlertCircle,
   CheckCircle2,
@@ -74,6 +73,21 @@ const PHOTO_STEPS: PhotoStep[] = [
     ],
   },
   {
+    title: 'Products inside — view 3',
+    subtitle: 'Another shelf or counter zone',
+    description:
+      'Take a third interior photo from a different zone — for example dal / atta / oil, snacks rack, biscuits, or cold drinks. It must clearly differ from views 1 and 2.',
+    Icon: Package,
+    tip: 'Shows another slice of your kirana layout so we see category mix and stock depth.',
+    color: 'purple',
+    overlayHint: 'Third product view — new shelf or counter area',
+    checklist: [
+      'Choose a section you did not cover in views 1 or 2',
+      'Products and packs should be clearly visible',
+      'Avoid empty corners — show real stock on the shelf or counter',
+    ],
+  },
+  {
     title: 'Road in front of store',
     subtitle: 'Street view for location',
     description:
@@ -88,22 +102,7 @@ const PHOTO_STEPS: PhotoStep[] = [
       'Include nearby buildings, road signs, or landmarks if possible',
     ],
   },
-  {
-    title: 'UPI QR Code / Payment display',
-    subtitle: 'Merchant ID verification',
-    description:
-      'Take a close-up photo of your UPI QR code or payment gateway display. The full QR must be in frame.',
-    Icon: QrCode,
-    tip: 'Hold the camera 20–30 cm away. Avoid glare, blur, or covering any part of the QR code.',
-    color: 'orange',
-    overlayHint: 'Move close — full QR code must fill the frame',
-    checklist: [
-      'Find your UPI QR code stand or payment display',
-      'Hold the camera 20–30 cm away from the QR code',
-      'The full QR code must be visible — no edges cut off',
-      'Ensure there is no glare, blur, or reflection on the QR',
-    ],
-  },
+  
 ]
 
 // ─── Color map ────────────────────────────────────────────────────────────────

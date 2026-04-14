@@ -483,7 +483,7 @@ export default function AssessmentPage() {
 
               <div className="rounded-xl border-l-4 border-l-emerald-600 border border-surface-200 bg-emerald-50/40 px-3 py-2.5 sm:px-4">
                 <p className="text-xs font-bold text-navy-900">Five live photos</p>
-                <p className="text-[11px] text-navy-700 mt-0.5 leading-snug">Camera only — follow the prompt for each slot (shelves, counter, entrance…).</p>
+                <p className="text-[11px] text-navy-700 mt-0.5 leading-snug">Camera only — storefront, three different product/shelf views, then the lane outside.</p>
               </div>
 
               {/* Image upload */}
